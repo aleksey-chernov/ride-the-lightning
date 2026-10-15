@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(sbt:*)",
+      "Bash(pnpm:*)",
+      "Bash(mise install:*)",
+      "Bash(mise ls:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(curl -s localhost:*)",
+      "Bash(curl -sN localhost:*)",
+      "Bash(curl -N localhost:*)"
+    ]
+  }
+}

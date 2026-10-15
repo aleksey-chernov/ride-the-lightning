@@ -1,0 +1,27 @@
+# sbt / Scala
+target/
+.bsp/
+.bloop/
+.metals/
+metals.sbt
+project/project/
+
+# IntelliJ (keep shared code style)
+.idea/*
+!.idea/codeStyles/
+*.iml
+
+# Node / UI
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Env & local
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+
+# Claude local overrides
+.claude/settings.local.json

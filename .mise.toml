@@ -1,0 +1,5 @@
+[tools]
+java = "temurin-25"
+sbt = "2.0.10"
+node = "24"
+pnpm = "latest"
