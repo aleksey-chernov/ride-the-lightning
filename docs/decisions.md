@@ -45,3 +45,7 @@ Append-only. Newest at the bottom. Format: decision, why, rejected alternatives.
 ### D12. Repo & collaboration
 - Fresh git repo, branch `main`, no remote until requested.
 - Code comments: short one-liners only. Every decision logged here in the same turn.
+
+### D13. Commit messages
+- Single line, starts with a capital letter, no type/area prefix.
+- One sentence: no trailing period. Several sentences: normal punctuation.

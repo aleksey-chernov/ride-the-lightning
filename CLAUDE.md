@@ -9,7 +9,8 @@ Educational, local-only app: Scala 3 backend ingests the Blitzortung live lightn
 ## Rules
 - **Log decisions:** any decision reached in conversation is appended to `docs/decisions.md` in the same turn (date, decision, why, rejected).
 - **Comments:** short one-liners, strictly to the point, only where code isn't self-explanatory. Concept explanations go in `docs/phase-N.md`.
-- One phase at a time: implement → user runs it → tick `docs/plan.md` → commit (conventional message).
+- One phase at a time: implement → user runs it → tick `docs/plan.md` → commit.
+- **Commits:** single line, starts with a capital letter, no type/area prefix (e.g. `Add health endpoint`). One sentence: no trailing period; several sentences: normal punctuation.
 - Blitzortung etiquette: one websocket connection, backoff + jitter on reconnect, no republishing, attribution in UI, develop against the replay sample.
 - Simplicity over Bootzooka parity; check patterns at github.com/softwaremill/bootzooka when needed.
 
