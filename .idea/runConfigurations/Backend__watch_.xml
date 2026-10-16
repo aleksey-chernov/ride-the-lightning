@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Backend (watch)" type="SbtRunConfiguration" factoryName="sbt Task">
+    <option name="tasks" value="~backend/reStart" />
+    <option name="useSbtShell" value="true" />
+    <method v="2" />
+  </configuration>
+</component>

@@ -61,3 +61,7 @@ Append-only. Newest at the bottom. Format: decision, why, rejected alternatives.
 ### D16. Simplified HTTP layer
 - Errors as `(StatusCode, Error_OUT)` on a shared `baseEndpoint`; Swagger generated from server endpoints directly.
 - **Rejected for now:** Bootzooka's `Fail` ADT and separate docs endpoint list (added if/when needed).
+
+### D17. Project naming and shared IDE run configs
+- sbt names: root `ride-the-lightning`, backend `backend` (IntelliJ module `ride-the-lightning.backend.main`).
+- IntelliJ run configs committed in `.idea/runConfigurations/`: `Backend` (run/debug) and `Backend (watch)` (`~backend/reStart`).
