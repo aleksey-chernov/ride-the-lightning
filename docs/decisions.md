@@ -49,3 +49,15 @@ Append-only. Newest at the bottom. Format: decision, why, rejected alternatives.
 ### D13. Commit messages
 - Single line, starts with a capital letter, no type/area prefix.
 - One sentence: no trailing period. Several sentences: normal punctuation.
+
+## 2026-10-16
+
+### D14. Scala 3.9.0 (LTS line)
+- Pairs with JDK 25 LTS; same as Bootzooka. **Rejected:** 3.10.0 (newest, non-LTS).
+
+### D15. Dev restart via custom `reStart`/`reStop` tasks on `bgRun`
+- sbt-revolver has no sbt 2 release; Bootzooka uses the same approach.
+
+### D16. Simplified HTTP layer
+- Errors as `(StatusCode, Error_OUT)` on a shared `baseEndpoint`; Swagger generated from server endpoints directly.
+- **Rejected for now:** Bootzooka's `Fail` ADT and separate docs endpoint list (added if/when needed).
