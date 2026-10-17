@@ -115,3 +115,16 @@ Append-only. Newest at the bottom. Format: decision, why, rejected alternatives.
 ### D30. Endpoint capabilities and tests
 - `HttpApi[R >: OxStreams & WebSockets]`; REST endpoints stay `Any` so the fast stub tests keep working (`HttpApi[Any]`).
 - SSE is tested against a real server on a random port.
+
+### D31. Frontend scaffold
+- `ui/` from `create-vite` (react-ts), Vite 8, React 19, TypeScript 6, pnpm.
+- Linting with **Oxlint** (template default). **Rejected:** ESLint (slower, more config). shadcn-generated `src/components/ui/**` is excluded from lint.
+
+### D32. shadcn/ui setup
+- `shadcn init -t vite -b radix -p nova`: Radix base, Nova preset (Lucide icons, Geist font), neutral palette, CSS variables. Dark mode via `class="dark"` on `<html>`.
+
+### D33. Dev networking
+- Vite dev server on :5173 proxies `/api` to the backend on :8080, so the browser never makes cross-origin calls in dev (SSE included).
+
+### D34. API types in the UI
+- Hand-written TS types mirroring `*Response` for now. **Deferred:** OpenAPI → TS codegen (Phase 7, optional).

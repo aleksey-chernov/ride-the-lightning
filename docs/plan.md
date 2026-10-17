@@ -16,7 +16,7 @@ StrikeSource (Blitzortung | Replay) --Flow[Strike]--> Ingest: Deduplicator --> S
 - [x] **2. Blitzortung ingest.** `Strike` model, `StrikeSource`, `Lzw.decode` + tests, lenient jsoniter codec, `BlitzortungSource` (sttp ws, `{"a":111}`, retry/backoff/server rotation), `record` mode → `sample.jsonl`, `ReplaySource`. App logs strikes.
 - [x] **3. In-memory processing + REST.** `Deduplicator`, `StrikeWindow`, pure `Stats.compute`, `/strikes/recent`, `/stats`, stub-server tests.
 - [x] **4. SSE streaming.** `StrikeBroadcaster` fed by `Ingest`, `/strikes/stream` (strike + heartbeat events), bounded per-client queues, drop-on-slow-consumer, real-server SSE test.
-- [ ] **5. Frontend skeleton.** `ui/` Vite + React + TS + Tailwind v4 + shadcn, dark shell, Vite proxy `/api` → `:8080`, version via react-query.
+- [x] **5. Frontend skeleton.** `ui/` Vite + React + TS + Tailwind v4 + shadcn (Radix, Nova), Oxlint, dark shell, Vite proxy `/api` → `:8080`, backend status via react-query, attribution footer.
 - [ ] **6. Live map.** MapLibre + OpenFreeMap dark, EventSource → ref buffer → throttled `setData`, heatmap + fading circles, attribution.
 - [ ] **7. Stats panel.** shadcn cards, Recharts per-minute rate, hotspots table with fly-to. Optional OpenAPI → TS codegen.
 - [ ] **8. Richer stats.** Per-region names, stations-per-strike, delay percentiles, `mds` quality filter, 0.5° hotspots.
