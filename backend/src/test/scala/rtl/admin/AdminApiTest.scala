@@ -7,7 +7,7 @@ import sttp.tapir.server.stub4.TapirSyncStubInterpreter
 import rtl.http.{HttpApi, HttpConfig}
 
 class AdminApiTest extends AnyFlatSpec with Matchers:
-  private val httpApi = HttpApi(AdminApi().endpoints, HttpConfig("localhost", 8080))
+  private val httpApi = HttpApi[Any](AdminApi().endpoints, HttpConfig("localhost", 8080))
 
   // Runs endpoint logic in-process; no real server or network.
   private val backend = TapirSyncStubInterpreter().whenServerEndpointsRunLogic(httpApi.allEndpoints).backend()

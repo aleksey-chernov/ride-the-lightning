@@ -1,19 +1,23 @@
 package rtl.http
 
 import ox.Ox
+import sttp.capabilities.WebSockets
 import sttp.shared.Identity
 import sttp.tapir.*
 import sttp.tapir.server.ServerEndpoint
 import sttp.tapir.server.interceptor.cors.CORSInterceptor
 import sttp.tapir.server.model.ValuedEndpointOutput
 import sttp.tapir.server.netty.NettyConfig
-import sttp.tapir.server.netty.sync.{NettySyncServer, NettySyncServerBinding, NettySyncServerOptions}
+import sttp.tapir.server.netty.sync.{NettySyncServer, NettySyncServerBinding, NettySyncServerOptions, OxStreams}
 import sttp.tapir.swagger.SwaggerUIOptions
 import sttp.tapir.swagger.bundle.SwaggerInterpreter
 import rtl.BuildInfo
 
-/** Serves the API under `/api/v1` and Swagger UI under `/api/v1/docs`. */
-class HttpApi(apiEndpoints: List[ServerEndpoint[Any, Identity]], config: HttpConfig):
+/** Serves the API under `/api/v1` and Swagger UI under `/api/v1/docs`.
+  *
+  * `R` = capabilities the endpoints need: `OxStreams` in the app (SSE), `Any` (none) in stub-based tests.
+  */
+class HttpApi[R >: OxStreams & WebSockets](apiEndpoints: List[ServerEndpoint[R, Identity]], config: HttpConfig):
   private val contextPath = List("api", "v1")
 
   private val serverOptions: NettySyncServerOptions = NettySyncServerOptions.customiseInterceptors
@@ -21,7 +25,7 @@ class HttpApi(apiEndpoints: List[ServerEndpoint[Any, Identity]], config: HttpCon
     .corsInterceptor(CORSInterceptor.default[Identity])
     .options
 
-  val allEndpoints: List[ServerEndpoint[Any, Identity]] =
+  val allEndpoints: List[ServerEndpoint[R, Identity]] =
     val docs = SwaggerInterpreter(swaggerUIOptions = SwaggerUIOptions.default.copy(contextPath = contextPath))
       .fromServerEndpoints[Identity](apiEndpoints, "Ride the Lightning", BuildInfo.version)
     val prefix = contextPath.foldLeft(emptyInput: EndpointInput[Unit])(_ / _)

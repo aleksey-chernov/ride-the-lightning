@@ -101,3 +101,17 @@ Append-only. Newest at the bottom. Format: decision, why, rejected alternatives.
 - API types are `XResponse` / `XRequest` (PascalCase, no `_IN`/`_OUT`); nested parts keep plain names (`MinuteCount`, `Hotspot`).
 - Domain types aren't returned directly: `StrikeResponse.from(strike)`; lists are wrapped in a response object (`RecentStrikesResponse`).
 - **Rejected:** Bootzooka's `_OUT` suffix (house style, not a Scala convention); returning the domain `Strike`.
+
+## 2026-10-18
+
+### D28. SSE fan-out
+- `StrikeBroadcaster`: one bounded queue (1000) per subscriber; `publish` uses non-blocking `offer`, so a full queue drops the strike for that client only (counted, logged on disconnect).
+- Subscription lifetime = flow lifetime (`try`/`finally`), so disconnects clean up automatically.
+
+### D29. Stream format
+- `GET /api/v1/strikes/stream`: `strike` events (StrikeResponse JSON) for each new deduplicated strike, `heartbeat` every 15 s.
+- No event ids or replay: clients load `/strikes/recent` first, then follow the stream.
+
+### D30. Endpoint capabilities and tests
+- `HttpApi[R >: OxStreams & WebSockets]`; REST endpoints stay `Any` so the fast stub tests keep working (`HttpApi[Any]`).
+- SSE is tested against a real server on a random port.

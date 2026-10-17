@@ -18,10 +18,11 @@ class StrikesApiTest extends AnyFlatSpec with Matchers:
   window.add(strike(clock.now.minus(Duration.ofMinutes(20)), lat = 1.0))
   window.add(strike(clock.now, lat = 2.0))
 
-  private val endpoints = StrikesApi(window).endpoints ++ StatsApi(window, IngestCounters(), clock).endpoints
+  private val endpoints =
+    StrikesApi(window, StrikeBroadcaster()).restEndpoints ++ StatsApi(window, IngestCounters(), clock).endpoints
   private val backend =
     TapirSyncStubInterpreter()
-      .whenServerEndpointsRunLogic(HttpApi(endpoints, HttpConfig("localhost", 8080)).allEndpoints)
+      .whenServerEndpointsRunLogic(HttpApi[Any](endpoints, HttpConfig("localhost", 8080)).allEndpoints)
       .backend()
 
   "GET /strikes/recent" should "return strikes from the default 15 minutes, newest first" in {

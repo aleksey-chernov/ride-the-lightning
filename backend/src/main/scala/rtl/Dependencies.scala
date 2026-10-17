@@ -7,14 +7,15 @@ import rtl.http.HttpApi
 import rtl.ingest.blitzortung.BlitzortungSource
 import rtl.ingest.{Ingest, IngestCounters, ReplaySource, SourceKind, StrikeSource}
 import rtl.stats.StatsApi
-import rtl.strikes.{Deduplicator, StrikeWindow, StrikesApi}
+import rtl.strikes.{Deduplicator, StrikeBroadcaster, StrikeWindow, StrikesApi}
 import sttp.client4.DefaultSyncBackend
+import sttp.tapir.server.netty.sync.OxStreams
 
 import java.time.Clock
 import scala.jdk.DurationConverters.*
 
 // Manual wiring: build every component here, passing dependencies via constructors.
-case class Dependencies(httpApi: HttpApi, ingest: Ingest, window: StrikeWindow, counters: IngestCounters)
+case class Dependencies(httpApi: HttpApi[OxStreams], ingest: Ingest, window: StrikeWindow, counters: IngestCounters)
 
 object Dependencies:
   def create(config: Config, clock: Clock = Clock.systemUTC())(using Ox): Dependencies =
@@ -26,8 +27,10 @@ object Dependencies:
       case SourceKind.Replay => ReplaySource(config.ingest.replay)
 
     val window = StrikeWindow(config.strikes.window.toJava, clock)
+    val broadcaster = StrikeBroadcaster()
     val counters = IngestCounters()
-    val ingest = Ingest(strikeSource, Deduplicator(clock), window, counters)
+    val ingest = Ingest(strikeSource, Deduplicator(clock), window, broadcaster, counters)
 
-    val endpoints = AdminApi().endpoints ++ StrikesApi(window).endpoints ++ StatsApi(window, counters, clock).endpoints
+    val endpoints =
+      AdminApi().endpoints ++ StrikesApi(window, broadcaster).endpoints ++ StatsApi(window, counters, clock).endpoints
     Dependencies(HttpApi(endpoints, config.http), ingest, window, counters)

@@ -7,7 +7,7 @@ Each phase ends runnable and gets its own commit. Tick when done.
 StrikeSource (Blitzortung | Replay) --Flow[Strike]--> Ingest: Deduplicator --> StrikeWindow (last 60 min)
    StrikeWindow --> GET /api/v1/strikes/recent
    StrikeWindow --> Stats.compute (per-minute, per-region, hotspots) --> GET /api/v1/stats
-   Ingest --> broadcast (Phase 4) --> GET /api/v1/strikes/stream (one subscriber per browser)
+   Ingest --> StrikeBroadcaster --> GET /api/v1/strikes/stream (SSE, one bounded queue per client)
 ```
 
 ## Phases
@@ -15,7 +15,7 @@ StrikeSource (Blitzortung | Replay) --Flow[Strike]--> Ingest: Deduplicator --> S
 - [x] **1. Backend skeleton.** sbt build, `Main extends OxApp`, Tapir `/api/v1/version` + `/health`, Swagger at `/api/v1/docs`, pureconfig, logback, custom `reStart`.
 - [x] **2. Blitzortung ingest.** `Strike` model, `StrikeSource`, `Lzw.decode` + tests, lenient jsoniter codec, `BlitzortungSource` (sttp ws, `{"a":111}`, retry/backoff/server rotation), `record` mode → `sample.jsonl`, `ReplaySource`. App logs strikes.
 - [x] **3. In-memory processing + REST.** `Deduplicator`, `StrikeWindow`, pure `Stats.compute`, `/strikes/recent`, `/stats`, stub-server tests.
-- [ ] **4. SSE streaming.** Broadcast from `Ingest`, `/strikes/stream`, per-client subscriber, drop-on-slow-consumer, `curl -N` check.
+- [x] **4. SSE streaming.** `StrikeBroadcaster` fed by `Ingest`, `/strikes/stream` (strike + heartbeat events), bounded per-client queues, drop-on-slow-consumer, real-server SSE test.
 - [ ] **5. Frontend skeleton.** `ui/` Vite + React + TS + Tailwind v4 + shadcn, dark shell, Vite proxy `/api` → `:8080`, version via react-query.
 - [ ] **6. Live map.** MapLibre + OpenFreeMap dark, EventSource → ref buffer → throttled `setData`, heatmap + fading circles, attribution.
 - [ ] **7. Stats panel.** shadcn cards, Recharts per-minute rate, hotspots table with fly-to. Optional OpenAPI → TS codegen.
