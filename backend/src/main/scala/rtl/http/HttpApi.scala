@@ -17,7 +17,7 @@ class HttpApi(apiEndpoints: List[ServerEndpoint[Any, Identity]], config: HttpCon
   private val contextPath = List("api", "v1")
 
   private val serverOptions: NettySyncServerOptions = NettySyncServerOptions.customiseInterceptors
-    .defaultHandlers(msg => ValuedEndpointOutput(Http.jsonErrorOutput, Error_OUT(msg)), notFoundWhenRejected = true)
+    .defaultHandlers(msg => ValuedEndpointOutput(Http.jsonErrorOutput, ErrorResponse(msg)), notFoundWhenRejected = true)
     .corsInterceptor(CORSInterceptor.default[Identity])
     .options
 

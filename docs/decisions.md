@@ -80,3 +80,24 @@ Append-only. Newest at the bottom. Format: decision, why, rejected alternatives.
 
 ### D21. Deduplicate strikes in processing
 - Blitzortung sends the same strike once per overlapping region; dedupe in Phase 3, not in the source.
+
+### D22. Deduplication rule
+- Same strike if |Δt| < 1 ms and |Δlat|, |Δlon| < 0.02°, remembered for 1 min after arrival.
+- **Why:** in a 200-message recording, 37 exact repeats (same strike, other region) and 17 re-solutions µs apart and < 1 km; distinct strokes are ms apart.
+
+### D23. No hub until there are several consumers
+- Phase 3: one ingest fork writes straight to the window. Fan-out (broadcast to SSE clients) arrives with Phase 4.
+
+### D24. Strike window
+- Last 60 min (config `strikes.window`) by strike time, immutable `Vector` in an `AtomicReference`: one writer, lock-free readers.
+
+### D25. Stats computed on request
+- Pure `Stats.compute` over a window snapshot. **Rejected for now:** incremental aggregates (unneeded at a few strikes/s).
+
+### D26. Config durations
+- Durations in HOCON style (`60 minutes`), read as `FiniteDuration`, converted to `java.time.Duration` in code. A test loads the real `application.conf`.
+
+### D27. API type naming and domain/response split
+- API types are `XResponse` / `XRequest` (PascalCase, no `_IN`/`_OUT`); nested parts keep plain names (`MinuteCount`, `Hotspot`).
+- Domain types aren't returned directly: `StrikeResponse.from(strike)`; lists are wrapped in a response object (`RecentStrikesResponse`).
+- **Rejected:** Bootzooka's `_OUT` suffix (house style, not a Scala convention); returning the domain `Strike`.

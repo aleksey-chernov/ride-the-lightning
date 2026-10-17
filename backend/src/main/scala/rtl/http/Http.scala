@@ -6,10 +6,10 @@ import sttp.tapir.*
 import sttp.tapir.json.jsoniter.*
 
 object Http:
-  val jsonErrorOutput: EndpointOutput[Error_OUT] = jsonBody[Error_OUT]
+  val jsonErrorOutput: EndpointOutput[ErrorResponse] = jsonBody[ErrorResponse]
 
   // Shared base for all endpoints: errors are JSON with a status code.
-  val baseEndpoint: PublicEndpoint[Unit, (StatusCode, Error_OUT), Unit, Any] =
+  val baseEndpoint: PublicEndpoint[Unit, (StatusCode, ErrorResponse), Unit, Any] =
     endpoint.errorOut(statusCode.and(jsonErrorOutput))
 
-case class Error_OUT(error: String) derives ConfiguredJsonValueCodec, Schema
+case class ErrorResponse(error: String) derives ConfiguredJsonValueCodec, Schema

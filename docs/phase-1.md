@@ -38,11 +38,11 @@ backend/src/test/scala/rtl/admin/AdminApiTest.scala
 
 ## How a request flows
 `Main` → `Config.load()` → `Dependencies.create(config)` builds `AdminApi` and `HttpApi` → `httpApi.start()` binds Netty on :8080.
-A `GET /api/v1/health` hits Netty → Tapir strips `/api/v1`, matches `healthEndpoint` → runs `handleSuccess` logic → `Health_OUT("ok")` encoded to JSON by jsoniter.
+A `GET /api/v1/health` hits Netty → Tapir strips `/api/v1`, matches `healthEndpoint` → runs `handleSuccess` logic → `HealthResponse("ok")` encoded to JSON by jsoniter.
 
 ## Scala concepts used
 - **`object`**: a singleton. `object Main` is the program entry point; `object AdminApi` (a *companion object*) holds the static-like parts of `class AdminApi`.
-- **`case class`**: immutable data class with `equals`, `toString`, `copy` and pattern matching for free. `Health_OUT(status: String)`.
+- **`case class`**: immutable data class with `equals`, `toString`, `copy` and pattern matching for free. `HealthResponse(status: String)`.
 - **`derives`**: asks the compiler to generate type-class instances. `derives ConfigReader` (read from config), `derives ConfiguredJsonValueCodec` (JSON), `derives Schema` (OpenAPI docs). No reflection; it's all compile time.
 - **`trait`**: like an interface that can hold code. `Logging` is mixed in with `with Logging`.
 - **Significant indentation**: Scala 3 allows Python-like blocks without braces (`:` then indent).
@@ -50,7 +50,7 @@ A `GET /api/v1/health` hits Netty → Tapir strips `/api/v1`, matches `healthEnd
 - **Imports**: `import sttp.tapir.*` imports everything from a package (Scala 3 uses `*`, not `_`).
 
 ## Libraries
-- **Tapir**: endpoints are *values* (`baseEndpoint.get.in("health").out(jsonBody[Health_OUT])`). The same description drives the server, the Swagger docs, and (later) clients/tests. Logic is attached separately with `.handleSuccess`.
+- **Tapir**: endpoints are *values* (`baseEndpoint.get.in("health").out(jsonBody[HealthResponse])`). The same description drives the server, the Swagger docs, and (later) clients/tests. Logic is attached separately with `.handleSuccess`.
 - **Ox**: direct-style concurrency on Java virtual threads. `OxApp.Simple` gives a root scope; `never` blocks until Ctrl+C, then everything started in the scope is shut down. No `Future`/`IO` wrappers.
 - **pureconfig**: maps `application.conf` onto `Config` case classes; fails at startup with a clear message if something is missing.
 - **jsoniter-scala**: fast JSON codecs generated at compile time.

@@ -4,18 +4,18 @@ Each phase ends runnable and gets its own commit. Tick when done.
 
 ## Architecture (in-memory)
 ```
-StrikeSource (Blitzortung | Replay) --Flow[Strike]--> Hub (Ox fan-out)
-   ├─> RecentStrikes   (ring buffer, last 30 min)          -> GET /api/v1/strikes/recent
-   ├─> StatsAggregator (per-minute, per-region, hotspots)   -> GET /api/v1/stats
-   └─> SSE broadcaster (one subscriber per browser)         -> GET /api/v1/strikes/stream
+StrikeSource (Blitzortung | Replay) --Flow[Strike]--> Ingest: Deduplicator --> StrikeWindow (last 60 min)
+   StrikeWindow --> GET /api/v1/strikes/recent
+   StrikeWindow --> Stats.compute (per-minute, per-region, hotspots) --> GET /api/v1/stats
+   Ingest --> broadcast (Phase 4) --> GET /api/v1/strikes/stream (one subscriber per browser)
 ```
 
 ## Phases
 - [x] **0. Repo, harness, tooling, IDE.** Git, CLAUDE.md, decisions log, mise, scalafmt, IntelliJ setup (`docs/phase-0.md`).
 - [x] **1. Backend skeleton.** sbt build, `Main extends OxApp`, Tapir `/api/v1/version` + `/health`, Swagger at `/api/v1/docs`, pureconfig, logback, custom `reStart`.
 - [x] **2. Blitzortung ingest.** `Strike` model, `StrikeSource`, `Lzw.decode` + tests, lenient jsoniter codec, `BlitzortungSource` (sttp ws, `{"a":111}`, retry/backoff/server rotation), `record` mode → `sample.jsonl`, `ReplaySource`. App logs strikes.
-- [ ] **3. In-memory processing + REST.** Dedupe (same strike per region), Hub fan-out, `RecentStrikes`, `StatsAggregator`, `/strikes/recent`, `/stats`, stub-server tests.
-- [ ] **4. SSE streaming.** `/strikes/stream`, per-client subscriber, drop-on-slow-consumer, `curl -N` check.
+- [x] **3. In-memory processing + REST.** `Deduplicator`, `StrikeWindow`, pure `Stats.compute`, `/strikes/recent`, `/stats`, stub-server tests.
+- [ ] **4. SSE streaming.** Broadcast from `Ingest`, `/strikes/stream`, per-client subscriber, drop-on-slow-consumer, `curl -N` check.
 - [ ] **5. Frontend skeleton.** `ui/` Vite + React + TS + Tailwind v4 + shadcn, dark shell, Vite proxy `/api` → `:8080`, version via react-query.
 - [ ] **6. Live map.** MapLibre + OpenFreeMap dark, EventSource → ref buffer → throttled `setData`, heatmap + fading circles, attribution.
 - [ ] **7. Stats panel.** shadcn cards, Recharts per-minute rate, hotspots table with fly-to. Optional OpenAPI → TS codegen.
