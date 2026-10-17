@@ -16,6 +16,7 @@ lazy val backend = project
       "com.softwaremill.sttp.tapir" %% "tapir-jsoniter-scala" % tapirVersion,
       "com.softwaremill.sttp.tapir" %% "tapir-swagger-ui-bundle" % tapirVersion,
       "com.softwaremill.ox" %% "core" % "1.0.9",
+      "com.softwaremill.sttp.client4" %% "core" % "4.0.27",
       "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % "2.41.5",
       "com.github.pureconfig" %% "pureconfig-core" % "0.17.10",
       "ch.qos.logback" % "logback-classic" % "1.6.5",
@@ -25,6 +26,7 @@ lazy val backend = project
     scalacOptions ++= Seq("-deprecation", "-feature", "-Wunused:all"),
     buildInfoKeys := Seq[BuildInfoKey](BuildInfoKey("name" -> "ride-the-lightning"), version, scalaVersion),
     buildInfoPackage := "rtl",
+    Compile / mainClass := Some("rtl.Main"),
     // separate JVM so Ctrl+C / reStop cleanly stop the app
     run / fork := true,
     // silence JDK 25 warnings from Scala runtime / Netty native libs

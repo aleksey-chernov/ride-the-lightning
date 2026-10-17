@@ -17,6 +17,9 @@ node_modules/
 dist/
 *.tsbuildinfo
 
+# Local data (recordings)
+data/
+
 # Env & local
 .env
 .env.*

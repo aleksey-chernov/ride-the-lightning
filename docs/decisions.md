@@ -65,3 +65,18 @@ Append-only. Newest at the bottom. Format: decision, why, rejected alternatives.
 ### D17. Project naming and shared IDE run configs
 - sbt names: root `ride-the-lightning`, backend `backend` (IntelliJ module `ride-the-lightning.backend.main`).
 - IntelliJ run configs committed in `.idea/runConfigurations/`: `Backend` (run/debug) and `Backend (watch)` (`~backend/reStart`).
+
+## 2026-10-17
+
+### D18. Recordings stay local
+- Live recordings go to `data/` (gitignored); only a 3-frame fixture is committed for decoder tests.
+
+### D19. Reconnect policy
+- Ox `retry`, exponential backoff 1 s → 1 min with jitter, infinite; random server, never the same one twice in a row.
+- A session only ends by exception (closed socket or failed upgrade), so every end triggers a retry.
+
+### D20. Replay semantics
+- Recording is sorted by strike time, replayed in a loop at `speed`, with strike times shifted to "now" so time windows work.
+
+### D21. Deduplicate strikes in processing
+- Blitzortung sends the same strike once per overlapping region; dedupe in Phase 3, not in the source.

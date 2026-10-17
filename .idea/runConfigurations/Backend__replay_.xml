@@ -1,0 +1,16 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Backend (replay)" type="Application" factoryName="Application">
+    <option name="ALTERNATIVE_JRE_PATH" value="$USER_HOME$/.local/share/mise/installs/java/temurin-25" />
+    <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
+    <envs>
+      <env name="INGEST_SOURCE" value="replay" />
+    </envs>
+    <option name="MAIN_CLASS_NAME" value="rtl.Main" />
+    <module name="ride-the-lightning.backend.main" />
+    <option name="VM_PARAMETERS" value="--sun-misc-unsafe-memory-access=allow --enable-native-access=ALL-UNNAMED" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
