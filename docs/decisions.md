@@ -128,3 +128,27 @@ Append-only. Newest at the bottom. Format: decision, why, rejected alternatives.
 
 ### D34. API types in the UI
 - Hand-written TS types mirroring `*Response` for now. **Deferred:** OpenAPI → TS codegen (Phase 7, optional).
+
+### D35. Map stack
+- `maplibre-gl` 6.14.0 + `react-map-gl` 8.1.3, pinned to exact versions; OpenFreeMap `dark` style.
+
+### D36. MapLibre worker under Vite
+- MapLibre v6 resolves its worker relative to its own file, which breaks under Vite (dev pre-bundling and prod hashing).
+- Fix: import the worker with `?worker&url` (ES worker format) and call `setWorkerUrl` inside a lazy `import('maplibre-gl')` passed as `mapLib`, so MapLibre stays in its own chunk.
+- **Rejected:** `optimizeDeps.exclude` (fixes dev only, not the production build).
+
+### D37. Live strikes in the UI
+- `StrikeBuffer` outside React state (15-min window, deduped by time+lat+lon); MapLibre gets a snapshot via `setData` every 500 ms; React re-renders only status and a once-a-second count.
+- `/strikes/recent` is reloaded on every stream (re)connect; manual retry every 5 s when `EventSource` gives up on an error response.
+
+### D38. Frontend tests
+- Vitest for pure logic first (`strikeBuffer.test.ts`); component tests later if needed.
+
+### D39. Strike animations
+- Fade-out is data-driven: opacity and heatmap weight reach 0 at the end of the 15-min window, so eviction is invisible.
+- Arrival flash (~1.5 s) is a CSS animation on a short-lived MapLibre `Marker`, only for new strikes from the live stream (not the `/strikes/recent` backfill), capped at 100 at once, hidden under `prefers-reduced-motion`.
+- **Rejected:** animating a GeoJSON source per frame (`setData` ~30×/s flooded MapLibre's worker and starved basemap tiles).
+
+### D40. One connection status; foldable stats panel
+- The header badge is the only connection indicator, driven by the SSE stream status (`/health` polling removed from the UI; the endpoint stays for ops). The map shows just the strike count.
+- The stats card folds into a 3.5rem rail; the preference is kept in `localStorage` (`rtl.statsOpen`).
