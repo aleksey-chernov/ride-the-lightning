@@ -181,3 +181,32 @@ Append-only. Newest at the bottom. Format: decision, why, rejected alternatives.
 
 ### D47. Exact npm versions
 - Every dependency pinned to an exact version; `saveExact: true` in `pnpm-workspace.yaml`. Only `esbuild` may run install scripts (`allowBuilds`).
+
+### D48. Stats panel
+- `useGetStats` polled every 5 s with react-query; the poll keeps running while the panel is folded (cheap, and the card has fresh data when unfolded). On error the last good data stays, with a header note; no data + error shows "Stats unavailable".
+- Per-minute chart: shadcn `chart` (Recharts 3.8.0, exact), bars in `--chart-1`, animation off so 5 s refreshes don't re-grow bars.
+- Regions are shown as "Region {id}" until names arrive in Phase 8.
+
+### D49. Fly-to across features
+- `App` holds `MapFocus | null` (`shared/types/map-focus.ts`) and wires the stats `onHotspotSelect` to `LiveMap`; features stay independent. `requestId` increments per request so repeated picks fly again. `flyTo` 1.6 s at zoom 6, `jumpTo` for reduced motion, deferred until the map loads.
+
+### D50. Name places by geography, not Blitzortung regions
+- Blitzortung `region` ids are overlapping processing areas: the same strike arrives once per region and dedupe keeps the first, so per-region counts are arbitrary. The map's own name table matches our data only for ids 0–5 (Unknown, Europe, Oceania, North America, Asia, South America); higher ids don't match where strikes fall.
+- Instead the backend classifies each strike by coordinates against Natural Earth (public domain) country and ocean/sea shapes; stats show top places and hotspots get a place name.
+- Supersedes the D48 "Region {id}" bullet; done in Phase 7.
+- API: `regions` is removed; `places` lists `{ name, kind: country | sea, count }`, last 10 min, top 10, busiest first; `Hotspot.place` is the most common place in that cell. Points more than 3° from any shape are "Open ocean".
+- Data: Natural Earth 1:50m countries (`NAME_EN`, full English names rather than abbreviated map labels) and marine polygons, bundled as `geo/places.json.gz` by `scripts/build-places.py`, pinned to a natural-earth-vector commit, coordinates rounded to 3 decimals.
+- **Rejected:** mapping the official region names (partial and unreliable); continents only (too coarse).
+
+### D51. Stats panel always shown; phone layout
+- The fold/rail is removed (desktop and phone), together with its persisted store; supersedes the D40 fold bullet and the D48 note about polling while folded.
+- Below `lg` map and stats stack and the page scrolls (map `60dvh`, min 20rem; stats at natural height). From `lg` the page fits the viewport and only the stats content scrolls. Picking a hotspot scrolls the page back to the map.
+- The map attribution starts collapsed behind MapLibre's (i) button.
+- The UI treats 12 s without a strike or heartbeat as a dead stream and reconnects (Vite's dev proxy keeps the browser's SSE connection open after the backend dies, so the badge never went offline); the backend heartbeat drops from 15 s to 5 s to keep detection quick.
+- The map's strike-count pill is removed (the stats card already shows counts); the header badge reads just `online` / `offline`, with the backend version as its tooltip.
+- **Rejected:** keeping the fold with chevrons on phones; a bottom sheet (more code for little gain).
+
+### D52. Natural Earth downloaded by the backend
+- The backend downloads the two Natural Earth 1:50m GeoJSON files (same pinned commit) into `data/geo/` (gitignored, `geo.cache-dir`) when they're missing, then reads them from disk on every start; tests use the same cache. Supersedes the D50 bundling bullet: no Python script, no bundled `places.json.gz`, no coordinate rounding.
+- Loaded at startup, before ingest, because every strike is classified as it arrives; a failed download (3 retries) stops the start with the error.
+- **Rejected:** loading on the first request (strikes arriving before it would have no place); bundling a preprocessed file built by a Python script (an extra toolchain).

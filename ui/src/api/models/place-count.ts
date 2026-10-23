@@ -4,8 +4,10 @@
  * Ride the Lightning
  * OpenAPI spec version: 0.1.0-SNAPSHOT
  */
+import type { PlaceCountKind } from './place-count-kind';
 
-export interface RegionCount {
-  region: number;
+export interface PlaceCount {
+  name: string;
+  kind: PlaceCountKind;
   count: number;
 }

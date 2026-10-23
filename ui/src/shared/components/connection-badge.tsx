@@ -5,13 +5,19 @@ type Props = { status: ConnectionStatus; version?: string };
 
 /** Connection indicator: presentational, the caller decides what "status" means. */
 export function ConnectionBadge({ status, version }: Props) {
+  const title = version && `backend ${version}`;
   if (status === 'connecting') return <Badge variant="outline">connecting…</Badge>;
-  if (status === 'reconnecting') return <Badge variant="destructive">backend offline · reconnecting…</Badge>;
+  if (status === 'reconnecting')
+    return (
+      <Badge variant="destructive" title={title}>
+        offline
+      </Badge>
+    );
 
   return (
-    <Badge variant="outline" className="gap-1.5">
+    <Badge variant="outline" className="gap-1.5" title={title}>
       <span className="size-2 animate-pulse rounded-full bg-yellow-400" />
-      live{version && ` · backend ${version}`}
+      online
     </Badge>
   );
 }

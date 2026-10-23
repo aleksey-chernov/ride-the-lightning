@@ -3,6 +3,8 @@ import type { StrikeResponse } from '@api/models/strike-response';
 import type { ConnectionStatus } from '@shared/types/connection-status';
 
 const RETRY_MS = 5_000;
+// the backend sends a heartbeat every 5 s; silence this long means a dead connection the socket hasn't reported (e.g. via the dev proxy)
+const STALE_MS = 12_000;
 
 /**
  * Follows /strikes/stream and, on every (re)connect, loads /strikes/recent to fill gaps.
@@ -11,6 +13,7 @@ const RETRY_MS = 5_000;
 export function followStrikes(minutes: number, onStrike: (s: StrikeResponse, live: boolean) => void, onStatus: (s: ConnectionStatus) => void): () => void {
   let source: EventSource | undefined;
   let retryTimer: number | undefined;
+  let staleTimer: number | undefined;
   let closed = false;
 
   const loadRecent = () =>
@@ -18,14 +21,29 @@ export function followStrikes(minutes: number, onStrike: (s: StrikeResponse, liv
       .then((r) => !closed && r.strikes.forEach((s) => onStrike(s, false)))
       .catch(() => {}); // connection state comes from the stream
 
+  const watchStale = () => {
+    window.clearTimeout(staleTimer);
+    staleTimer = window.setTimeout(() => {
+      onStatus('reconnecting');
+      source?.close();
+      connect();
+    }, STALE_MS);
+  };
+
   const connect = () => {
     source = new EventSource('/api/v1/strikes/stream');
-    source.addEventListener('strike', (e) => onStrike(JSON.parse(e.data) as StrikeResponse, true));
+    source.addEventListener('strike', (e) => {
+      watchStale();
+      onStrike(JSON.parse(e.data) as StrikeResponse, true);
+    });
+    source.addEventListener('heartbeat', watchStale);
     source.onopen = () => {
+      watchStale();
       onStatus('live');
       void loadRecent();
     };
     source.onerror = () => {
+      window.clearTimeout(staleTimer);
       onStatus('reconnecting');
       // the browser retries dropped connections itself, but gives up on an error response (e.g. 502 from the proxy)
       if (source?.readyState === EventSource.CLOSED && !closed) retryTimer = window.setTimeout(connect, RETRY_MS);
@@ -37,6 +55,7 @@ export function followStrikes(minutes: number, onStrike: (s: StrikeResponse, liv
   return () => {
     closed = true;
     window.clearTimeout(retryTimer);
+    window.clearTimeout(staleTimer);
     source?.close();
   };
 }

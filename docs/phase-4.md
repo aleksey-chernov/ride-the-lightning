@@ -5,7 +5,7 @@
 INGEST_SOURCE=replay sbt ~backend/reStart          # or IntelliJ "Backend (replay)"
 curl -N localhost:8080/api/v1/strikes/stream        # Ctrl+C to disconnect
 ```
-Output, one event per strike plus a heartbeat every 15 s:
+Output, one event per strike plus a heartbeat every 5 s:
 ```
 data: {"time":"2026-10-17T22:00:05.319973509Z","lat":24.559874,"lon":-50.506327,"region":3,...}
 event: strike
@@ -35,7 +35,7 @@ Ingest fork ──publish──> StrikeBroadcaster ──offer──> [queue cli
 - **SSE**: a plain HTTP response that never ends (`text/event-stream`), each event is `data:` + `event:` lines and a blank line. Browsers read it with `EventSource`, which reconnects automatically. One-way only, which is all we need.
 - **Fan-out with bounded queues**: each subscriber gets an `ArrayBlockingQueue(1000)`. `offer` never blocks, so one slow browser can't stall ingest or the other clients; it just misses strikes. C# twin: `Channel.CreateBounded<T>(new BoundedChannelOptions(1000) { FullMode = DropWrite })` per subscriber.
 - **Subscription = flow lifetime**: `broadcaster.flow` subscribes when the stream starts and unsubscribes in `finally`. When a client disconnects, the server interrupts the flow's virtual thread (blocked in `queue.take()`), `finally` runs, and the subscriber is gone. No manual cleanup, no leaks.
-- **Flow composition**: `strikes.merge(heartbeats)` interleaves two infinite flows; `Flow.tick(15.seconds)` emits immediately, then every 15 s. Heartbeats keep proxies from closing idle connections and make dead connections fail on write.
+- **Flow composition**: `strikes.merge(heartbeats)` interleaves two infinite flows; `Flow.tick(5.seconds)` emits immediately, then every 5 s. Heartbeats keep proxies from closing idle connections, make dead connections fail on write, and let the UI notice a silent stream.
 - **Capabilities in types**: a streaming endpoint is a `ServerEndpoint[OxStreams, Identity]`; plain ones are `ServerEndpoint[Any, Identity]`. `HttpApi[R >: OxStreams & WebSockets]` accepts either. Stub tests use `HttpApi[Any]` because the stub interpreter can't stream (Scala infers the lower bound unless told, so the type is written explicitly).
 - **Real-server test**: `HttpConfig("localhost", 0)` binds a free port; the test reads the stream with sttp's `asInputStreamAlways` and parses events the way a browser would.
 

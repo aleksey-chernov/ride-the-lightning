@@ -5,7 +5,10 @@ export function AppFooter() {
       <a className="underline underline-offset-2" href="https://www.blitzortung.org" target="_blank" rel="noreferrer">
         Blitzortung.org
       </a>{' '}
-      contributors (CC BY-SA 4.0)
+      contributors (CC BY-SA 4.0) · Places:{' '}
+      <a className="underline underline-offset-2" href="https://www.naturalearthdata.com" target="_blank" rel="noreferrer">
+        Natural Earth
+      </a>
     </footer>
   );
 }

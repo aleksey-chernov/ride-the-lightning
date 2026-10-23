@@ -24,6 +24,7 @@ Educational, local-only app: Scala 3 backend ingests the Blitzortung live lightn
 - Install tools: `mise install`
 - Backend dev: `sbt ~backend/reStart` (live) or `INGEST_SOURCE=replay sbt ~backend/reStart` (recording)
 - Record live data: `sbt "backend/runMain rtl.ingest.Record 600"` → `data/sample.jsonl`
+- Place shapes: downloaded from Natural Earth (pinned commit) into `data/geo/` on the first backend start or test run; delete the folder to re-download
 - Tests: `sbt testFull` (plain `test` only reruns affected tests in sbt 2)
 - UI dev: `cd ui && pnpm dev` (http://localhost:5173, proxies `/api` to :8080)
 - UI checks: `pnpm lint` (Oxlint + Stylelint), `pnpm format:check`, `pnpm test`, `pnpm build`; fix with `pnpm lint:fix`, `pnpm format`

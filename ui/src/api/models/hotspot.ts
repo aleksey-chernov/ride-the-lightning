@@ -8,5 +8,6 @@
 export interface Hotspot {
   lat: number;
   lon: number;
+  place: string;
   count: number;
 }

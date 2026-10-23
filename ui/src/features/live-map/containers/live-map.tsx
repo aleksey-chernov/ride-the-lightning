@@ -1,22 +1,19 @@
 import { Card } from '@shared/components/ui/card';
-import { StrikeCount } from '@features/live-map/components/strike-count';
+import type { MapFocus } from '@shared/types/map-focus';
 import { StrikeMap } from '@features/live-map/components/strike-map';
 import { useLiveStrikes } from '@features/live-map/hooks/use-live-strikes';
-import { useLiveFeedStore } from '@features/live-map/stores/live-feed.store';
 
 const WINDOW_MINUTES = 15;
 
-/** Live map feature: connects to the strike feed and renders the map with its strike count. */
-export function LiveMap() {
+type Props = { focus: MapFocus | null };
+
+/** Live map feature: connects to the strike feed and renders the map. */
+export function LiveMap({ focus }: Props) {
   const buffer = useLiveStrikes(WINDOW_MINUTES);
-  const count = useLiveFeedStore((s) => s.count);
 
   return (
-    <Card className="relative min-h-96 overflow-hidden p-0">
-      <StrikeMap buffer={buffer} />
-      <div className="absolute top-3 left-3">
-        <StrikeCount count={count} minutes={WINDOW_MINUTES} />
-      </div>
+    <Card className="relative h-[60dvh] min-h-80 overflow-hidden p-0 has-[canvas:focus-visible]:ring-3 has-[canvas:focus-visible]:ring-ring/50 lg:h-auto lg:min-h-96 [&_canvas]:outline-none">
+      <StrikeMap buffer={buffer} focus={focus} />
     </Card>
   );
 }

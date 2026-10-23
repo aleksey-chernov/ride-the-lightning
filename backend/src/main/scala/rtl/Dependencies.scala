@@ -3,6 +3,7 @@ package rtl
 import ox.*
 import rtl.admin.AdminApi
 import rtl.config.Config
+import rtl.geo.PlaceIndex
 import rtl.http.HttpApi
 import rtl.ingest.blitzortung.BlitzortungSource
 import rtl.ingest.{Ingest, IngestCounters, ReplaySource, SourceKind, StrikeSource}
@@ -29,7 +30,8 @@ object Dependencies:
     val window = StrikeWindow(config.strikes.window.toJava, clock)
     val broadcaster = StrikeBroadcaster()
     val counters = IngestCounters()
-    val ingest = Ingest(strikeSource, Deduplicator(clock), window, broadcaster, counters)
+    val places = PlaceIndex.load(config.geo.cacheDir) // downloads ~4 MB of Natural Earth shapes on the first start
+    val ingest = Ingest(strikeSource, Deduplicator(clock), places, window, broadcaster, counters)
 
     val endpoints =
       AdminApi().endpoints ++ StrikesApi(window, broadcaster).endpoints ++ StatsApi(window, counters, clock).endpoints

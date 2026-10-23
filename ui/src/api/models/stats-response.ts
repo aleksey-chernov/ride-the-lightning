@@ -6,7 +6,7 @@
  */
 import type { Hotspot } from './hotspot';
 import type { MinuteCount } from './minute-count';
-import type { RegionCount } from './region-count';
+import type { PlaceCount } from './place-count';
 
 export interface StatsResponse {
   generatedAt: string;
@@ -16,6 +16,6 @@ export interface StatsResponse {
   last10Minutes: number;
   lastHour: number;
   perMinute: MinuteCount[];
-  regions: RegionCount[];
+  places: PlaceCount[];
   hotspots: Hotspot[];
 }

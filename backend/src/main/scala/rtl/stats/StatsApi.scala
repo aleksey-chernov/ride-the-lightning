@@ -23,5 +23,5 @@ object StatsApi:
   val statsEndpoint = baseEndpoint.get
     .in("stats")
     .out(jsonBody[StatsResponse])
-    .description("Counts per minute, region and 1° hotspot, computed from the in-memory window")
+    .description("Counts per minute, place and 1° hotspot, computed from the in-memory window")
     .tag("stats")

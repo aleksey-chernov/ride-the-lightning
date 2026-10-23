@@ -4,9 +4,9 @@ Each phase ends runnable and gets its own commit. Tick when done.
 
 ## Architecture (in-memory)
 ```
-StrikeSource (Blitzortung | Replay) --Flow[Strike]--> Ingest: Deduplicator --> StrikeWindow (last 60 min)
+StrikeSource (Blitzortung | Replay) --Flow[Strike]--> Ingest: Deduplicator --> PlaceIndex (Natural Earth) --> StrikeWindow (last 60 min)
    StrikeWindow --> GET /api/v1/strikes/recent
-   StrikeWindow --> Stats.compute (per-minute, per-region, hotspots) --> GET /api/v1/stats
+   StrikeWindow --> Stats.compute (per-minute, per-place, hotspots) --> GET /api/v1/stats
    Ingest --> StrikeBroadcaster --> GET /api/v1/strikes/stream (SSE, one bounded queue per client)
 ```
 
@@ -19,8 +19,8 @@ StrikeSource (Blitzortung | Replay) --Flow[Strike]--> Ingest: Deduplicator --> S
 - [x] **5. Frontend skeleton.** `ui/` Vite + React + TS + Tailwind v4 + shadcn (Radix, Nova), Oxlint, dark shell, Vite proxy `/api` → `:8080`, backend status via react-query, attribution footer.
 - [x] **6. Live map.** MapLibre + OpenFreeMap dark, `/strikes/recent` + EventSource → `StrikeBuffer` → `setData` every 500 ms, heatmap + fading dots, live status, Vitest.
 - [x] **6a. Frontend structure and tooling.** `app/api/features/shared` layout, containers vs components, Zustand, Orval-generated API, response contract, Prettier/Stylelint/Oxlint rules, exact versions (`docs/frontend-conventions.md`).
-- [ ] **7. Stats panel.** shadcn cards, Recharts per-minute rate, hotspots table with fly-to. Uses the generated `useGetStats` hook.
-- [ ] **8. Richer stats.** Per-region names, stations-per-strike, delay percentiles, `mds` quality filter, 0.5° hotspots.
+- [x] **7. Stats panel.** shadcn cards, Recharts per-minute rate, hotspots table with fly-to, place names (countries/seas). Uses the generated `useGetStats` hook.
+- [ ] **8. Richer stats.** Stations-per-strike, delay percentiles, `mds` quality filter, 0.5° hotspots.
 - [ ] **9. Packaging.** sbt-native-packager single image (backend serves UI), docker-compose, GitHub Actions CI.
 - [ ] **10. Persistence.** Postgres (compose), Flyway, Magnum, batched inserts, hourly aggregates, history endpoints, embedded-PG tests.
 

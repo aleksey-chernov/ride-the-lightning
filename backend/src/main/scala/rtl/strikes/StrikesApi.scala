@@ -37,7 +37,7 @@ class StrikesApi(window: StrikeWindow, broadcaster: StrikeBroadcaster):
   val endpoints: List[ServerEndpoint[OxStreams, Identity]] = restEndpoints ++ streamEndpoints
 
 object StrikesApi:
-  val HeartbeatInterval: FiniteDuration = 15.seconds
+  val HeartbeatInterval: FiniteDuration = 5.seconds
 
   def strikeEvent(strike: StrikeResponse): ServerSentEvent =
     ServerSentEvent(data = Some(writeToString(strike)), eventType = Some("strike"))
@@ -53,7 +53,7 @@ object StrikesApi:
   val streamEndpoint = baseEndpoint.get
     .in("strikes" / "stream")
     .out(serverSentEventsBody)
-    .description("Server-Sent Events: `strike` (StrikeResponse JSON) for each new strike, `heartbeat` every 15 s")
+    .description("Server-Sent Events: `strike` (StrikeResponse JSON) for each new strike, `heartbeat` every 5 s")
     .tag("stream") // separate tag: generated HTTP clients skip it, browsers use EventSource
 
 case class StrikeResponse(

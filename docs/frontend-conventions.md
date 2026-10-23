@@ -57,8 +57,8 @@ Enforced by Oxlint (`no-restricted-imports` overrides per folder in `.oxlintrc.j
 | Kind | Where | Example |
 |---|---|---|
 | Server state (data owned by the backend) | react-query, via the generated hooks in `src/api` | `useGetVersion()` |
-| Client state shared across components | a Zustand store per concern, in `features/*/stores/*.store.ts` | `useLiveFeedStore`, `useStatsPanelStore` |
-| Remembered UI preferences | Zustand `persist` middleware (localStorage) | stats panel open/closed |
+| Client state shared across components | a Zustand store per concern, in `features/*/stores/*.store.ts` | `useLiveFeedStore` |
+| Remembered UI preferences | Zustand `persist` middleware (localStorage) | none yet |
 | High-frequency data | plain objects outside React, read by timers | `StrikeBuffer` (strikes for the map) |
 | Local UI state | `useState` in the component | a hover flag |
 

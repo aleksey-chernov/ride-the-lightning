@@ -43,7 +43,7 @@ export const getGetStatsUrl = () => {
 };
 
 /**
- * Counts per minute, region and 1° hotspot, computed from the in-memory window
+ * Counts per minute, place and 1° hotspot, computed from the in-memory window
  */
 export const getStats = async (options?: Parameters<typeof fetchJson>[1]): Promise<StatsResponse> => {
   return fetchJson<StatsResponse>(getGetStatsUrl(), {

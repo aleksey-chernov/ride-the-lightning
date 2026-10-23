@@ -3,12 +3,16 @@ package rtl.stats
 import com.github.plokhotnyuk.jsoniter_scala.macros.ConfiguredJsonValueCodec
 import rtl.http.ResponseContract.given
 import sttp.tapir.Schema
+import sttp.tapir.Schema.annotations.validate
+import sttp.tapir.Validator
 
 import java.time.Instant
 
 case class MinuteCount(minute: Instant, count: Int) derives Schema
-case class RegionCount(region: Int, count: Int) derives Schema
-case class Hotspot(lat: Double, lon: Double, count: Int) derives Schema // center of a 1° cell
+case class PlaceCount(name: String, @validate(Validator.enumeration(List("country", "sea"))) kind: String, count: Int)
+    derives Schema
+case class Hotspot(lat: Double, lon: Double, place: String, count: Int)
+    derives Schema // center of a 1° cell; most common place in it
 
 case class StatsResponse(
     generatedAt: Instant,
@@ -18,7 +22,7 @@ case class StatsResponse(
     last10Minutes: Int,
     lastHour: Int,
     perMinute: List[MinuteCount], // last 60 minutes, oldest first
-    regions: List[RegionCount], // last 10 minutes
+    places: List[PlaceCount], // last 10 minutes, top 10
     hotspots: List[Hotspot] // last 10 minutes, top 10
 ) derives ConfiguredJsonValueCodec,
       Schema
