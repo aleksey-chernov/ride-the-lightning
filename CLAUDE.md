@@ -13,10 +13,11 @@ Educational, local-only app: Scala 3 backend ingests the Blitzortung live lightn
 - **Commits:** single line, starts with a capital letter, no type/area prefix (e.g. `Add health endpoint`). One sentence: no trailing period; several sentences: normal punctuation.
 - Blitzortung etiquette: one websocket connection, backoff + jitter on reconnect, no republishing, attribution in UI, develop against the replay sample.
 - Simplicity over Bootzooka parity; check patterns at github.com/softwaremill/bootzooka when needed.
+- **Frontend:** follow `docs/frontend-conventions.md` (structure, layers, naming, imports, state, styling, tests). Exact npm versions only.
 
 ## Stack
 - Backend (`backend/`): Scala 3, sbt 2, Tapir netty-sync, Ox (direct style), sttp client4, jsoniter-scala, pureconfig, logback, ScalaTest. Manual DI in `Dependencies.scala`.
-- Frontend (`ui/`, from Phase 5): Vite, React, TypeScript, Tailwind v4, shadcn/ui (Radix base), MapLibre via react-map-gl, OpenFreeMap dark style, react-query, EventSource (SSE).
+- Frontend (`ui/`, from Phase 5): Vite, React, TypeScript, Tailwind v4, shadcn/ui (Radix base), MapLibre via react-map-gl, OpenFreeMap dark style, react-query (Orval-generated hooks), Zustand, EventSource (SSE); Prettier, Oxlint, Stylelint.
 - Tooling: mise (`.mise.toml`: Temurin 25, sbt, Node 24, pnpm), IntelliJ IDEA Ultimate + Scala plugin.
 
 ## Commands
@@ -24,5 +25,7 @@ Educational, local-only app: Scala 3 backend ingests the Blitzortung live lightn
 - Backend dev: `sbt ~backend/reStart` (live) or `INGEST_SOURCE=replay sbt ~backend/reStart` (recording)
 - Record live data: `sbt "backend/runMain rtl.ingest.Record 600"` → `data/sample.jsonl`
 - Tests: `sbt testFull` (plain `test` only reruns affected tests in sbt 2)
-- UI dev: `cd ui && pnpm dev` (http://localhost:5173, proxies `/api` to :8080); checks: `pnpm test`, `pnpm lint`, `pnpm build`
-- Add shadcn components: `cd ui && pnpm dlx shadcn@latest add <name>`
+- UI dev: `cd ui && pnpm dev` (http://localhost:5173, proxies `/api` to :8080)
+- UI checks: `pnpm lint` (Oxlint + Stylelint), `pnpm format:check`, `pnpm test`, `pnpm build`; fix with `pnpm lint:fix`, `pnpm format`
+- Regenerate API client after backend API changes: backend running, then `cd ui && pnpm api:generate`; commit `ui/src/api`
+- Add shadcn components: `cd ui && pnpm dlx shadcn@latest add <name>` (lands in `src/shared/components/ui`)

@@ -1,0 +1,63 @@
+/* Flash for a strike that just arrived over the stream: an expanding ring and a fading core (see strike-flash.ts). */
+.strike-flash {
+  --strike-flash-color: #fef9c3;
+  --strike-flash-ring-size: 56px;
+  --strike-flash-core-size: 18px;
+
+  position: relative;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.strike-flash::before,
+.strike-flash::after {
+  position: absolute;
+  border-radius: 9999px;
+  content: '';
+  translate: -50% -50%;
+}
+
+.strike-flash::before {
+  width: var(--strike-flash-ring-size);
+  height: var(--strike-flash-ring-size);
+  border: 2px solid var(--strike-flash-color);
+  animation: strike-ring 1.5s cubic-bezier(0.2, 0.8, 0.4, 1) forwards;
+}
+
+.strike-flash::after {
+  width: var(--strike-flash-core-size);
+  height: var(--strike-flash-core-size);
+  background: radial-gradient(circle, #fff 0%, var(--strike-flash-color) 40%, transparent 70%);
+  animation: strike-core 1.2s ease-out forwards;
+}
+
+@keyframes strike-ring {
+  from {
+    opacity: 1;
+    scale: 0.1;
+  }
+
+  to {
+    opacity: 0;
+    scale: 1;
+  }
+}
+
+@keyframes strike-core {
+  from {
+    opacity: 1;
+    scale: 1.4;
+  }
+
+  to {
+    opacity: 0;
+    scale: 0.4;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .strike-flash {
+    display: none;
+  }
+}

@@ -5,24 +5,28 @@
 INGEST_SOURCE=replay sbt ~backend/reStart   # or REPLAY_SPEED=5 for a busier map
 cd ui && pnpm dev                           # http://localhost:5173
 ```
-The map shows the last 15 minutes: a heatmap glow when zoomed out, one dot per strike when zoomed in. Each strike arriving over the stream flashes (expanding ring + bright core, ~1.5 s); dots then fade from white through yellow and orange to violet and dissolve completely before they're removed at 15 minutes. The header shows the single connection status (`live · backend <version>` / `backend offline · reconnecting…`), driven by the stream; the map shows the strike count. Stop the backend and the status switches to offline; start it again and the map refills. The stats panel folds into a slim rail (button in its corner); the choice is remembered in `localStorage`.
+The map shows the last 15 minutes: a heatmap glow when zoomed out, one dot per strike when zoomed in. Each strike arriving over the stream flashes (expanding ring + bright core, ~1.5 s); dots then fade from white through yellow and orange to violet and dissolve completely before they're removed at 15 minutes. The header shows the single connection status (`live · backend <version>` / `backend offline · reconnecting…`), driven by the stream; the map shows the strike count. Stop the backend and the status switches to offline; start it again and the map refills. The stats panel folds into a slim rail (button in its corner); the choice is remembered in `localStorage` (Zustand `persist`).
 
 Checks: `pnpm test` (Vitest), `pnpm lint`, `pnpm build`.
 
 ## Files
+Paths as of the frontend restructure (see `docs/frontend-conventions.md`):
 ```
-ui/src/map/
-  strikeBuffer.ts        recent strikes outside React state; dedupe, eviction, GeoJSON snapshot
-  strikeBuffer.test.ts   Vitest tests for the buffer
-  strikeStream.ts        EventSource on /strikes/stream + /strikes/recent on every (re)connect
-  useLiveStrikes.ts      hook: owns buffer + connection, exposes status and count
-  StrikeMap.tsx          react-map-gl <Map>, GeoJSON source, 500 ms setData loop
-  layers.ts              heatmap and circle layer styles (MapLibre expressions)
-  flashes.ts             arrival flash: a short-lived MapLibre Marker animated by CSS (index.css)
-  maplibre.ts            lazy MapLibre import + worker URL fix
-  StrikeCount.tsx        strike count badge on the map
-ui/src/components/StatsPanel.tsx  foldable stats card (content arrives in Phase 7)
-ui/src/lib/usePersistedFlag.ts    boolean preference saved in localStorage
+ui/src/features/live-map/
+  containers/live-map.tsx        connects the feed, renders map + count
+  components/strike-map.tsx      react-map-gl <Map>, GeoJSON source, 500 ms setData loop
+  components/strike-count.tsx    strike count badge on the map
+  hooks/use-live-strikes.ts      owns buffer + connection, publishes status/count to the store
+  stores/live-feed.store.ts      Zustand: connection status + count (read by the app header)
+  lib/strike-buffer.ts           recent strikes outside React state; dedupe, eviction, GeoJSON snapshot
+  lib/strike-buffer.test.ts      Vitest tests for the buffer
+  lib/strike-stream.ts           EventSource on /strikes/stream + /strikes/recent on every (re)connect
+  lib/strike-flash.ts/.css       arrival flash: a short-lived MapLibre Marker animated by CSS
+  lib/maplibre.ts                lazy MapLibre import + worker URL fix
+  constants/map-layers.ts        heatmap and circle layer styles (MapLibre expressions)
+  constants/map-style.ts         basemap URL, initial view, attribution
+ui/src/features/stats/           foldable stats panel (store + rail/card components); content arrives in Phase 7
+ui/src/shared/components/connection-badge.tsx   the single connection indicator (header)
 ```
 
 ## How data flows
@@ -49,5 +53,5 @@ ui/src/lib/usePersistedFlag.ts    boolean preference saved in localStorage
 ## Try
 1. Zoom into a storm cell until the heatmap fades and individual dots appear.
 2. In `layers.ts`, change the `circle-color` stops and watch Vite hot-reload the map.
-3. Change the window: `useLiveStrikes(5)` in `App.tsx` and compare the count.
+3. Change the window: `WINDOW_MINUTES = 5` in `features/live-map/containers/live-map.tsx` and compare the count.
 4. Browser dev tools → Network → `stream`: watch the `strike` events arrive.

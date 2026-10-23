@@ -1,6 +1,7 @@
 package rtl.stats
 
 import com.github.plokhotnyuk.jsoniter_scala.macros.ConfiguredJsonValueCodec
+import rtl.http.ResponseContract.given
 import sttp.tapir.Schema
 
 import java.time.Instant

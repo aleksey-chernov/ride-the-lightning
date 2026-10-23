@@ -39,3 +39,13 @@ class StrikesApiTest extends AnyFlatSpec with Matchers:
     val body = basicRequest.get(uri"http://test/api/v1/stats").send(backend).body.toOption.get
     body should include("\"lastHour\":2")
   }
+
+  "an empty window" should "still return the strikes array" in {
+    val emptyApi = StrikesApi(StrikeWindow(Duration.ofMinutes(60), TestClock()), StrikeBroadcaster()).restEndpoints
+    val emptyBackend = TapirSyncStubInterpreter()
+      .whenServerEndpointsRunLogic(HttpApi[Any](emptyApi, HttpConfig("localhost", 8080)).allEndpoints)
+      .backend()
+    basicRequest.get(uri"http://test/api/v1/strikes/recent").send(emptyBackend).body shouldBe Right(
+      """{"strikes":[]}"""
+    )
+  }

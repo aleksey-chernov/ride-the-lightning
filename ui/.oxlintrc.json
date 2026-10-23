@@ -1,20 +1,133 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": [
-    "react",
-    "typescript",
-    "oxc"
-  ],
+  "plugins": ["react", "typescript", "oxc", "unicorn", "import"],
   "rules": {
     "react/rules-of-hooks": "error",
+    "react/exhaustive-deps": "error",
     "react/only-export-components": [
       "warn",
       {
         "allowConstantExport": true
       }
+    ],
+    "unicorn/filename-case": [
+      "error",
+      {
+        "case": "kebabCase"
+      }
+    ],
+    "oxc/no-barrel-file": [
+      "error",
+      {
+        "threshold": 0
+      }
+    ],
+    "typescript/consistent-type-definitions": ["error", "type"],
+    "typescript/consistent-type-imports": "error",
+    "import/no-cycle": "error",
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "group": ["../**", "./../**"],
+            "message": "Use a path alias (@api, @shared, @features, @app) instead of a parent-relative import."
+          },
+          {
+            "group": ["@/**"],
+            "message": "The @/ alias is gone: use @api, @shared, @features or @app."
+          }
+        ]
+      }
     ]
   },
-  "ignorePatterns": [
-    "src/components/ui/**"
-  ]
+  "overrides": [
+    {
+      "files": ["src/**"],
+      "rules": {
+        "import/no-default-export": "error"
+      }
+    },
+    {
+      "files": ["src/shared/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["../**", "./../**"],
+                "message": "Use a path alias (@api, @shared, @features, @app) instead of a parent-relative import."
+              },
+              {
+                "group": ["@/**"],
+                "message": "The @/ alias is gone: use @api, @shared, @features or @app."
+              },
+              {
+                "group": ["@features/**", "@app/**"],
+                "message": "shared/ is the bottom layer: it must not import features/ or app/."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/features/live-map/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["../**", "./../**"],
+                "message": "Use a path alias (@api, @shared, @features, @app) instead of a parent-relative import."
+              },
+              {
+                "group": ["@/**"],
+                "message": "The @/ alias is gone: use @api, @shared, @features or @app."
+              },
+              {
+                "group": ["@app/**"],
+                "message": "Features must not import app/; the app composes features."
+              },
+              {
+                "group": ["@features/**", "!@features/live-map/**"],
+                "message": "Features must not import other features; share via shared/ or compose in app/."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/features/stats/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["../**", "./../**"],
+                "message": "Use a path alias (@api, @shared, @features, @app) instead of a parent-relative import."
+              },
+              {
+                "group": ["@/**"],
+                "message": "The @/ alias is gone: use @api, @shared, @features or @app."
+              },
+              {
+                "group": ["@app/**"],
+                "message": "Features must not import app/; the app composes features."
+              },
+              {
+                "group": ["@features/**", "!@features/stats/**"],
+                "message": "Features must not import other features; share via shared/ or compose in app/."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "ignorePatterns": ["src/api/**", "src/shared/components/ui/**", "dist/**"]
 }

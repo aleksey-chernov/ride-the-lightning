@@ -14,6 +14,8 @@ Checks: `pnpm lint` (Oxlint), `pnpm build` (TypeScript check + production bundle
 - Tailwind CSS support is bundled in Ultimate: class-name completion works in `.tsx` files.
 
 ## Files
+> These were the Phase 5 paths. Since the frontend restructure (plan item 6a) the code lives under `src/app`, `src/features`, `src/shared` and the generated `src/api`; see `docs/frontend-conventions.md`.
+
 ```
 ui/
   index.html                  page shell; class="dark" turns on the dark theme

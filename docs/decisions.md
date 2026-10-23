@@ -152,3 +152,32 @@ Append-only. Newest at the bottom. Format: decision, why, rejected alternatives.
 ### D40. One connection status; foldable stats panel
 - The header badge is the only connection indicator, driven by the SSE stream status (`/health` polling removed from the UI; the endpoint stays for ops). The map shows just the strike count.
 - The stats card folds into a 3.5rem rail; the preference is kept in `localStorage` (`rtl.statsOpen`).
+
+## 2026-10-23
+
+### D41. Frontend structure
+- `src/{app, api, features/<feature>, shared}`; inside a feature: `containers/` (smart: hooks, stores) and `components/` (presentational: props, callbacks), plus `hooks/`, `stores/`, `lib/`, `utils/`, `constants/`, `types/` on demand. Rulebook: `docs/frontend-conventions.md`.
+- Dependency rule `api ← shared ← features ← app`; features never import each other or `app/`. Enforced by Oxlint per-folder `no-restricted-imports`.
+
+### D42. Frontend state
+- Server state: react-query. Client state: one Zustand store per concern (`*.store.ts`), `persist` for UI preferences. High-frequency data (map strikes) stays in plain objects outside React.
+- **Rejected:** hooks + Context only (more boilerplate, re-render care).
+
+### D43. Generated API client
+- Orval generates `src/api` (react-query hooks + fetch, kebab-case files, no index files, plain response bodies) from `/api/v1/docs/docs.yaml`; committed; `pnpm api:generate` with the backend running. Replaces the hand-written types (supersedes D34).
+- The SSE endpoint is tagged `stream` and excluded from generation (browsers use `EventSource`).
+
+### D44. Response contract: collections always present
+- jsoniter's default omits empty collections, and Tapir marks them optional; `rtl.http.ResponseContract` keeps `[]` in JSON and marks collections required, so generated types are non-optional. Imported where response types are declared.
+
+### D45. UI formatting and editor settings
+- Prettier: single quotes, semicolons, width 160, LF; plugins sort imports (third-party, then `@api` → `@shared` → `@features` → `@app`, then `./`) and Tailwind classes.
+- `.editorconfig` gets a `ui/` section matching Prettier (width 160, single quotes).
+
+### D46. UI linting
+- Oxlint: kebab-case filenames, no barrel files, no import cycles, no default exports in `src/`, `type` over `interface`, `import type`, hook dependency checks, layer boundaries, no `../` imports.
+- Stylelint with `stylelint-config-standard` for CSS; oklch notation rules off (shadcn-generated tokens), Tailwind at-rules allowed.
+- Feature CSS is colocated with the code that uses it; `styles/globals.css` holds only Tailwind and theme tokens.
+
+### D47. Exact npm versions
+- Every dependency pinned to an exact version; `saveExact: true` in `pnpm-workspace.yaml`. Only `esbuild` may run install scripts (`allowBuilds`).

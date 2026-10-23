@@ -4,6 +4,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.writeToString
 import com.github.plokhotnyuk.jsoniter_scala.macros.ConfiguredJsonValueCodec
 import ox.flow.Flow
 import rtl.http.Http.baseEndpoint
+import rtl.http.ResponseContract.given
 import sttp.model.sse.ServerSentEvent
 import sttp.shared.Identity
 import sttp.tapir.*
@@ -53,7 +54,7 @@ object StrikesApi:
     .in("strikes" / "stream")
     .out(serverSentEventsBody)
     .description("Server-Sent Events: `strike` (StrikeResponse JSON) for each new strike, `heartbeat` every 15 s")
-    .tag("strikes")
+    .tag("stream") // separate tag: generated HTTP clients skip it, browsers use EventSource
 
 case class StrikeResponse(
     time: Instant,
