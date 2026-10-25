@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Backend tests (sbt)" type="SbtRunConfiguration" factoryName="sbt Task">
+    <option name="tasks" value="testFull" />
+    <option name="useSbtShell" value="true" />
+    <method v="2" />
+  </configuration>
+</component>
