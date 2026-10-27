@@ -51,6 +51,6 @@ Main: fork { strikes.runForeach(log) } <─────────────�
 
 ## Try
 1. Set a breakpoint in `Lzw.decode`, run `LzwTest` in Debug, watch `dict` grow.
-2. Log only strikes with `stations >= 30`: add `.filter(_.stations >= 30)` before `.runForeach` in `Main`.
+2. Log only strikes with `stations >= 20`: add `.filter(_.stations >= 20)` before `.runForeach` in `Main`.
 3. `REPLAY_SPEED=10 INGEST_SOURCE=replay sbt backend/run`: a 10× fast-forward.
 4. Pull the network cable (or toggle Wi-Fi) while live: watch `Connection #n lost` and the growing backoff.

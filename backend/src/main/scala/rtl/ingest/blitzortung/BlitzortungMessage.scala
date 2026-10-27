@@ -27,12 +27,13 @@ case class BlitzortungMessage(
     lat = lat + latc,
     lon = lon + lonc,
     region = region,
-    stations = sig.size,
+    stations = sig.count(_.used),
     delaySeconds = delay,
     mds = mds
   )
 
-case class BlitzortungStation(sta: Int, lat: Double, lon: Double) derives ConfiguredJsonValueCodec
+case class BlitzortungStation(sta: Int, lat: Double, lon: Double, status: Int = 0) derives ConfiguredJsonValueCodec:
+  def used: Boolean = (status & 4) != 0 // status & 4 (the compendium's bit 3): signal used to compute the position
 
 object BlitzortungMessage:
   def parse(json: String): Either[Throwable, BlitzortungMessage] = Try(
