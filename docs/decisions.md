@@ -210,3 +210,31 @@ Append-only. Newest at the bottom. Format: decision, why, rejected alternatives.
 - The backend downloads the two Natural Earth 1:50m GeoJSON files (same pinned commit) into `data/geo/` (gitignored, `geo.cache-dir`) when they're missing, then reads them from disk on every start; tests use the same cache. Supersedes the D50 bundling bullet: no Python script, no bundled `places.json.gz`, no coordinate rounding.
 - Loaded at startup, before ingest, because every strike is classified as it arrives; a failed download (3 retries) stops the start with the error.
 - **Rejected:** loading on the first request (strikes arriving before it would have no place); bundling a preprocessed file built by a Python script (an extra toolchain).
+
+## 2026-10-25
+
+### D53. Stations used
+- `Strike.stations` counts `sig` entries with `status & 4` (Blitzortung's "signal used for the computation" bit) instead of `sig.size`. The feed lists at most 40 stations per strike, used or not, so the count is a lower bound when the list is full. In the sample: 8–32 used, never fewer than 8 (Blitzortung's minimum for a fix).
+- **Rejected:** `sig.size` (capped at 40 and includes unused stations); showing both "reported" and "used" (more UI, little value).
+
+### D54. Timing-spread filter
+- `mds` is Blitzortung's "maximal deviation span" in ns: how far the stations' timings disagree with the computed position, lower is better. There is no official quality threshold, so the filter is our own cut: `0 < mds ≤ 10 µs` (`TIGHT_MDS_NS`), an on/off switch, off by default, named by what it does ("timing spread"), not "accurate strikes". A missing `mds` (0) doesn't pass.
+- Why 10 µs: the sample tops out near 15 µs (likely a server-side cut, so 15 µs would hide nothing); 10 µs keeps about two thirds; 7.5 µs drops more than half.
+- **Rejected:** 15 µs and 7.5 µs; a quantile threshold that moves with the data (hard to explain); an `mcg` (station-geometry) filter (a second setting, maybe later); strike-level `status` (undocumented).
+
+### D55. Where the filter applies
+- `GET /stats?maxMds=<ns>` filters on the server (all window-based numbers, plus `maxMds` echo and `filteredOut`); the map filters on the client by `StrikeResponse.mds`. `/strikes/recent` and the SSE stream stay unfiltered, so toggling needs no reconnect and ingest/Blitzortung traffic is unchanged.
+- **Rejected:** a filtered stream with a per-client parameter (reconnect per toggle); computing stats in the browser (it holds only 15 min, logic duplicated); an always-on server filter (hides data on an unverified threshold).
+
+### D56. Detection stats
+- `StatsResponse.detection`: nearest-rank p50/p90/p99 of stations used, delay (s) and `mds` (ns) over the last 10 minutes (same window as places and hotspots), after the filter, omitted when empty. Delay is publication lag (two groups in the sample: ~3–6 s and ~20–36 s), so p90/p99 matter.
+- Delay and `mds` percentiles skip 0, which the decoder uses for a missing field.
+- **Rejected:** a stations histogram (buckets tuned on 200 capped strikes); interpolated percentiles; a 60-minute window.
+
+### D57. 0.5° hotspots
+- Hotspot cells are 0.5° (`floor(x / 0.5) * 0.5`, centre +0.25), ties ordered by latitude then longitude; coordinates shown with 2 decimals.
+- **Rejected:** keeping 1° (merges neighbouring storm cells); H3 (stretch goal).
+
+### D58. Filter state and toggle
+- A Zustand `persist` store in `shared/stores` (`rtl.strikeFilter`, a boolean) read by the map, the stats panel and the header; the switch sits in the app header (switch only below `sm`, label from `sm`). Labels derive from `TIGHT_MDS_NS`.
+- **Rejected:** `useState` in `App` (not persisted, prop drilling); a store inside one feature (cross-feature import); the toggle in the stats card (below the map on phones).

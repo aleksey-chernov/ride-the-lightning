@@ -6,7 +6,7 @@ Each phase ends runnable and gets its own commit. Tick when done.
 ```
 StrikeSource (Blitzortung | Replay) --Flow[Strike]--> Ingest: Deduplicator --> PlaceIndex (Natural Earth) --> StrikeWindow (last 60 min)
    StrikeWindow --> GET /api/v1/strikes/recent
-   StrikeWindow --> Stats.compute (per-minute, per-place, hotspots) --> GET /api/v1/stats
+   StrikeWindow --> Stats.compute (optional maxMds filter; per-minute, per-place, 0.5° hotspots, detection percentiles) --> GET /api/v1/stats?maxMds=
    Ingest --> StrikeBroadcaster --> GET /api/v1/strikes/stream (SSE, one bounded queue per client)
 ```
 
@@ -20,7 +20,7 @@ StrikeSource (Blitzortung | Replay) --Flow[Strike]--> Ingest: Deduplicator --> P
 - [x] **6. Live map.** MapLibre + OpenFreeMap dark, `/strikes/recent` + EventSource → `StrikeBuffer` → `setData` every 500 ms, heatmap + fading dots, live status, Vitest.
 - [x] **6a. Frontend structure and tooling.** `app/api/features/shared` layout, containers vs components, Zustand, Orval-generated API, response contract, Prettier/Stylelint/Oxlint rules, exact versions (`docs/frontend-conventions.md`).
 - [x] **7. Stats panel.** shadcn cards, Recharts per-minute rate, hotspots table with fly-to, place names (countries/seas). Uses the generated `useGetStats` hook.
-- [ ] **8. Richer stats.** Stations-per-strike, delay percentiles, `mds` quality filter, 0.5° hotspots.
+- [x] **8. Richer stats.** Stations used per strike, detection percentiles (stations, delay, mds), `mds` timing-spread filter, 0.5° hotspots.
 - [ ] **9. Packaging.** sbt-native-packager single image (backend serves UI), docker-compose, GitHub Actions CI.
 - [ ] **10. Persistence.** Postgres (compose), Flyway, Magnum, batched inserts, hourly aggregates, history endpoints, embedded-PG tests.
 
@@ -31,4 +31,6 @@ Stretch: `GlmSource` (NOAA), OpenTelemetry + `grafana/otel-lgtm`, H3 hexbins, st
 - After open send `{"a":111}`; each text frame = one LZW-compressed JSON strike.
 - LZW: code < 256 literal; ≥ 256 dictionary; missing code → `prev + prev.head`; add `prev + cur.head` each step.
 - Fields: `time` (epoch ns, Long), `lat`, `lon`, `alt`, `pol`, `mds`, `mcg`, `status`, `region`, `delay`, `latc`/`lonc`, `sig[]` (`sta`, `time`, `lat`, `lon`, `alt`, `status`). Parse leniently.
+- `sig[].status` bit flags (compendium): 1 = negative polarity, 2 = positive polarity, 4 = signal used for the computation; 8 and 16 also occur, undocumented. `sig` is capped at 40 entries, so stations used (`status & 4`) is a lower bound when it's full.
+- `mds` = maximal deviation span in ns (timing disagreement of the used stations, lower is better; not an accuracy radius, no official threshold). `mcg` = maximal circular gap in degrees. `delay` = seconds from strike to publication.
 - Refs: github.com/akeamc/blitzortung (`src/live.rs`), github.com/Satyasuranjeet/live_lightning_data.
