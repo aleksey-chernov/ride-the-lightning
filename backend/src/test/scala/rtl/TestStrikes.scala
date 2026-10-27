@@ -11,6 +11,9 @@ object TestStrikes:
       lat: Double = 50.0,
       lon: Double = 10.0,
       region: Int = 1,
-      place: Option[Place] = None
+      place: Option[Place] = None,
+      stations: Int = 20,
+      delaySeconds: Double = 5.0,
+      mds: Int = 5000
   ): Strike =
-    Strike(time, lat, lon, region, stations = 20, delaySeconds = 5.0, mds = 5000, place = place)
+    Strike(time, lat, lon, region, stations, delaySeconds, mds, place)

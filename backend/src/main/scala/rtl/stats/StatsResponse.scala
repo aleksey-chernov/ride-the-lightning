@@ -12,7 +12,13 @@ case class MinuteCount(minute: Instant, count: Int) derives Schema
 case class PlaceCount(name: String, @validate(Validator.enumeration(List("country", "sea"))) kind: String, count: Int)
     derives Schema
 case class Hotspot(lat: Double, lon: Double, place: String, count: Int)
-    derives Schema // center of a 1° cell; most common place in it
+    derives Schema // center of a 0.5° cell; most common place in it
+case class Percentiles(p50: Double, p90: Double, p99: Double) derives Schema // nearest-rank
+case class Detection(
+    stationsUsed: Option[Percentiles],
+    delaySeconds: Option[Percentiles],
+    mdsNanos: Option[Percentiles]
+) derives Schema // last 10 minutes; each None when empty
 
 case class StatsResponse(
     generatedAt: Instant,
@@ -23,6 +29,9 @@ case class StatsResponse(
     lastHour: Int,
     perMinute: List[MinuteCount], // last 60 minutes, oldest first
     places: List[PlaceCount], // last 10 minutes, top 10
-    hotspots: List[Hotspot] // last 10 minutes, top 10
+    hotspots: List[Hotspot], // last 10 minutes, top 10
+    maxMds: Option[Int], // echo of the applied filter
+    filteredOut: Int, // strikes in the last hour hidden by maxMds
+    detection: Detection
 ) derives ConfiguredJsonValueCodec,
       Schema
