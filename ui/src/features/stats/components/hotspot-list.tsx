@@ -3,11 +3,11 @@ import { formatCoordinates, formatCount } from '@features/stats/utils/stats-form
 
 type Props = { hotspots: Hotspot[]; onSelect: (hotspot: { lon: number; lat: number }) => void };
 
-/** Busiest 1° cells in the last 10 minutes; picking one asks to fly the map there. */
+/** Busiest 0.5° cells in the last 10 minutes; picking one asks to fly the map there. */
 export function HotspotList({ hotspots, onSelect }: Props) {
   return (
-    <section className="space-y-2" aria-label="Hotspots, last 10 minutes">
-      <h3 className="text-xs font-medium text-muted-foreground">Hotspots, last 10 min</h3>
+    <section className="space-y-2" aria-label="Hotspots (0.5° cells), last 10 minutes">
+      <h3 className="text-xs font-medium text-muted-foreground">Hotspots (0.5°), last 10 min</h3>
       {hotspots.length === 0 ? (
         <p className="text-xs text-muted-foreground">No hotspots in the last 10 minutes</p>
       ) : (

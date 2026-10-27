@@ -9,37 +9,40 @@ import type { MapFocus } from '@shared/types/map-focus';
 import { dotLayer, heatmapLayer } from '@features/live-map/constants/map-layers';
 import { INITIAL_VIEW, MAP_STYLE_URL, STRIKE_ATTRIBUTION } from '@features/live-map/constants/map-style';
 import { maplibre } from '@features/live-map/lib/maplibre';
-import type { StrikeBuffer, StrikeFeatures } from '@features/live-map/lib/strike-buffer';
+import { passesMds, type StrikeBuffer, type StrikeFeatures } from '@features/live-map/lib/strike-buffer';
 import { flash } from '@features/live-map/lib/strike-flash';
 
 const REFRESH_MS = 500;
 const FLY_DURATION_MS = 1600;
 const EMPTY: StrikeFeatures = { type: 'FeatureCollection', features: [] }; // stable reference: never reset by re-renders
 
-type Props = { buffer: StrikeBuffer; focus: MapFocus | null };
+type Props = { buffer: StrikeBuffer; focus: MapFocus | null; maxMds: number | null };
 
 /** Renders the buffer's strikes; talks to MapLibre directly so frequent updates skip React re-renders. */
-export function StrikeMap({ buffer, focus }: Props) {
+export function StrikeMap({ buffer, focus, maxMds }: Props) {
   const mapRef = useRef<MapRef>(null);
   const [loaded, setLoaded] = useState(false);
+  const activeFlashes = useRef({ count: 0 }); // one counter across re-subscriptions, so MAX_FLASHES holds
 
-  // all strikes: a fresh snapshot twice a second
+  // all strikes: a fresh snapshot twice a second, plus one right away so a filter change shows at once
   useEffect(() => {
-    const id = window.setInterval(() => {
+    const refresh = () => {
       const source = mapRef.current?.getMap().getSource('strikes') as GeoJSONSource | undefined;
-      source?.setData(buffer.snapshot(Date.now()));
-    }, REFRESH_MS);
+      source?.setData(buffer.snapshot(Date.now(), maxMds));
+    };
+    refresh();
+    const id = window.setInterval(refresh, REFRESH_MS);
     return () => window.clearInterval(id);
-  }, [buffer]);
+  }, [buffer, maxMds]);
 
   // a CSS flash for each strike arriving over the stream (hidden for reduced motion, see styles/globals.css)
   useEffect(() => {
-    const active = { count: 0 };
+    const active = activeFlashes.current;
     return buffer.onArrival((s) => {
       const map = mapRef.current?.getMap();
-      if (map) void flash(map, s.lon, s.lat, active);
+      if (map && passesMds(s.mds, maxMds)) void flash(map, s.lon, s.lat, active);
     });
-  }, [buffer]);
+  }, [buffer, maxMds]);
 
   // move the camera on each focus request; a request made before the map loads is applied on load
   useEffect(() => {

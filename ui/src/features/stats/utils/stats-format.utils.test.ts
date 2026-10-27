@@ -1,18 +1,18 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatCoordinates, formatCount, formatDuplicateRate, formatLocalTime, toMinutePoints, toPlaceShares } from './stats-format.utils';
+import { describeStats, formatCoordinates, formatCount, formatDuplicateRate, formatLocalTime, toMinutePoints, toPlaceShares } from './stats-format.utils';
 
 describe('formatCoordinates', () => {
-  it('formats north and east with one decimal', () => {
-    expect(formatCoordinates(41.5, 2.5)).toBe('41.5°N 2.5°E');
+  it('formats north and east with two decimals', () => {
+    expect(formatCoordinates(41.75, 2.25)).toBe('41.75°N 2.25°E');
   });
 
   it('formats south and west without a minus sign', () => {
-    expect(formatCoordinates(-33.5, -70.5)).toBe('33.5°S 70.5°W');
+    expect(formatCoordinates(-33.25, -70.75)).toBe('33.25°S 70.75°W');
   });
 
   it('leaves out the hemisphere letter at zero', () => {
-    expect(formatCoordinates(0, 0)).toBe('0.0° 0.0°');
+    expect(formatCoordinates(0, 0)).toBe('0.00° 0.00°');
   });
 });
 
@@ -73,5 +73,20 @@ describe('toPlaceShares', () => {
 
   it('returns an empty list for no places', () => {
     expect(toPlaceShares([])).toEqual([]);
+  });
+});
+
+describe('describeStats', () => {
+  it('says how often stats refresh when no filter is applied', () => {
+    expect(describeStats({ filteredOut: 0 }, false)).toBe('Refreshed every 5 s');
+  });
+
+  it('appends the echoed filter and the hidden count', () => {
+    expect(describeStats({ maxMds: 10_000, filteredOut: 1234 }, false)).toBe('Refreshed every 5 s · timing spread ≤ 10 µs · 1,234 hidden (last hour)');
+  });
+
+  it('lets a backend error win over the filter note', () => {
+    expect(describeStats({ maxMds: 10_000, filteredOut: 3 }, true)).toBe('Backend unreachable, showing last data');
+    expect(describeStats(undefined, true)).toBe('Backend unreachable');
   });
 });

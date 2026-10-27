@@ -2,10 +2,15 @@ import type { FeatureCollection, Point } from 'geojson';
 
 import type { StrikeResponse } from '@api/models/strike-response';
 
-type BufferedStrike = { timeMs: number; lat: number; lon: number };
+type BufferedStrike = { timeMs: number; lat: number; lon: number; mds: number };
 
 export type StrikeFeatures = FeatureCollection<Point, { age: number }>;
 export type ArrivalListener = (s: StrikeResponse) => void;
+
+/** Same rule as the backend's `/stats?maxMds`: 0 means missing, so it never passes a limit. */
+export function passesMds(mds: number, maxMds: number | null): boolean {
+  return maxMds === null || (mds > 0 && mds <= maxMds);
+}
 
 /** Recent strikes, kept outside React state; the map reads snapshots on a timer. */
 export class StrikeBuffer {
@@ -25,7 +30,7 @@ export class StrikeBuffer {
   add(s: StrikeResponse, live = false): void {
     const key = `${s.time}|${s.lat}|${s.lon}`;
     if (this.#strikes.has(key)) return;
-    this.#strikes.set(key, { timeMs: Date.parse(s.time), lat: s.lat, lon: s.lon });
+    this.#strikes.set(key, { timeMs: Date.parse(s.time), lat: s.lat, lon: s.lon, mds: s.mds });
     if (live) this.#listeners.forEach((listener) => listener(s));
   }
 
@@ -35,8 +40,8 @@ export class StrikeBuffer {
     return () => this.#listeners.delete(listener);
   }
 
-  /** Evicts strikes older than the window; `age` goes from 0 (now) to 1 (oldest kept). */
-  snapshot(nowMs: number): StrikeFeatures {
+  /** Evicts strikes older than the window; `age` goes from 0 (now) to 1 (oldest kept). `maxMds` hides strikes without being evicted. */
+  snapshot(nowMs: number, maxMds: number | null = null): StrikeFeatures {
     const features: StrikeFeatures['features'] = [];
     for (const [key, s] of this.#strikes) {
       const age = (nowMs - s.timeMs) / this.#windowMs;
@@ -44,6 +49,7 @@ export class StrikeBuffer {
         this.#strikes.delete(key);
         continue;
       }
+      if (!passesMds(s.mds, maxMds)) continue;
       features.push({ type: 'Feature', geometry: { type: 'Point', coordinates: [s.lon, s.lat] }, properties: { age: Math.max(0, age) } });
     }
     return { type: 'FeatureCollection', features };

@@ -4,6 +4,7 @@
  * Ride the Lightning
  * OpenAPI spec version: 0.1.0-SNAPSHOT
  */
+import type { Detection } from './detection';
 import type { Hotspot } from './hotspot';
 import type { MinuteCount } from './minute-count';
 import type { PlaceCount } from './place-count';
@@ -18,4 +19,7 @@ export interface StatsResponse {
   perMinute: MinuteCount[];
   places: PlaceCount[];
   hotspots: Hotspot[];
+  maxMds?: number;
+  filteredOut: number;
+  detection: Detection;
 }
