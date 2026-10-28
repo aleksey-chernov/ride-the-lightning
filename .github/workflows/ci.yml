@@ -9,15 +9,19 @@ on:
 concurrency:
   group: ci-${{ github.ref }}
 
+env:
+  IMAGE: registry.fly.io/ride-the-lightning:${{ github.sha }}
+
 jobs:
-  verify:
+  backend:
+    name: Backend tests
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
-
-      # installs Java, sbt, Node and pnpm from .mise.toml
+      # installs the tools pinned in .mise.toml (only those this job needs)
       - uses: jdx/mise-action@v3
-
+        with:
+          install_args: java sbt
       - uses: actions/cache@v4
         with:
           path: |
@@ -25,32 +29,69 @@ jobs:
             ~/.cache/sbt
             ~/.sbt
           key: sbt-${{ hashFiles('build.sbt', 'project/plugins.sbt', 'project/build.properties') }}
-
       # Natural Earth shapes used by PlaceIndexTest; the pinned URLs live in NaturalEarth.scala
       - uses: actions/cache@v4
         with:
           path: data/geo
           key: geo-${{ hashFiles('backend/src/main/scala/rtl/geo/NaturalEarth.scala') }}
+      - run: sbt testFull
 
-      - name: Backend tests
-        run: sbt testFull
-
-      - name: UI checks
+  ui:
+    name: UI checks
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
         working-directory: ui
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm lint
-          pnpm format:check
-          pnpm test
+    steps:
+      - uses: actions/checkout@v5
+      - uses: jdx/mise-action@v3
+        with:
+          install_args: node pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm format:check
+      - run: pnpm test
+      - run: pnpm build
 
-      # builds the UI and the image locally; also stages the Docker build context used below
-      - name: Docker image
-        run: sbt docker/Docker/publishLocal
-
-      # --local-only: build with the runner's Docker (layers cached from the step above) and push to Fly's registry;
-      # --ha=false keeps one machine (one Blitzortung connection)
-      - name: Deploy to Fly.io
+  image:
+    name: Docker image
+    needs: [backend, ui]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: jdx/mise-action@v3
+        with:
+          install_args: java sbt node pnpm flyctl
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/coursier
+            ~/.cache/sbt
+            ~/.sbt
+          key: sbt-${{ hashFiles('build.sbt', 'project/plugins.sbt', 'project/build.properties') }}
+      # builds the UI and the image ride-the-lightning:latest with the runner's Docker
+      - run: sbt docker/Docker/publishLocal
+      # on main, the deploy job below deploys exactly this image
+      - name: Push to Fly's registry
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: fly deploy target/out/jvm/scala-3.9.0/docker/docker/stage --config "$PWD/fly.toml" --ha=false --local-only
+        run: |
+          fly auth docker
+          docker tag ride-the-lightning:latest "$IMAGE"
+          docker push "$IMAGE"
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+  deploy:
+    name: Deploy to Fly.io
+    needs: image
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: jdx/mise-action@v3
+        with:
+          install_args: flyctl
+      # no build: the image job pushed it; --ha=false keeps one machine (one Blitzortung connection)
+      - run: fly deploy --image "$IMAGE" --ha=false
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

@@ -27,10 +27,12 @@ sbt docker/Docker/stage
 fly deploy target/out/jvm/scala-3.9.0/docker/docker/stage --config "$PWD/fly.toml" --ha=false --remote-only
 fly logs -a ride-the-lightning                   # look for "Last minute: N strikes"
 ```
-CI deploys on every push to `main` once all checks pass (D65). There it uses `--local-only` instead of `--remote-only`: the runner has Docker, so flyctl builds the image there, reusing the layers from the check build, and pushes it to `registry.fly.io`. Either way Fly runs the same OCI image, booted as a Firecracker micro-VM rather than a Docker container; `USER`, `ENV` and `ENTRYPOINT` from the Dockerfile still apply. It needs a deploy token for this app only, stored as a GitHub secret. Piping it means it never shows on screen:
+CI deploys on every push to `main` once all checks pass (D65, D66). `Backend tests` and `UI checks` run in parallel. `Docker image` then builds the image with the runner's Docker and, on `main`, pushes it to `registry.fly.io/ride-the-lightning:<commit sha>`. Finally, `Deploy to Fly.io` runs `fly deploy --image <that tag>`, so nothing is rebuilt and the deployed image is the one that was built after the checks passed. A job starts only when the jobs in its `needs:` succeeded; that's what draws the arrows on the run page. Either way Fly runs the same OCI image, booted as a Firecracker micro-VM rather than a Docker container; `USER`, `ENV` and `ENTRYPOINT` from the Dockerfile still apply. It needs a deploy token for this app only, stored as a GitHub secret. Piping it means it never shows on screen:
 ```bash
 fly tokens create deploy -a ride-the-lightning --name github-actions | gh secret set FLY_API_TOKEN
 ```
+Change the login: `fly secrets set BASIC_AUTH_USER=... BASIC_AUTH_PASSWORD=...` (without `--stage`). Fly restarts the machine with the new values, and the app starts with an empty hour. The browser still holds the old credentials, gets a 401 and asks again. `fly secrets list` shows only names and digests, never values. To rotate only the password, set only `BASIC_AUTH_PASSWORD`.
+
 `--config` needs an absolute path, because flyctl resolves it against the build directory. `--ha=false` keeps one machine; Fly's default of two would open two Blitzortung connections. Changing a secret restarts the machine. Every restart starts with an empty hour and downloads the shapes again (no volume).
 
 ## Files
@@ -41,7 +43,7 @@ backend/src/main/scala/rtl/http/HttpApi.scala  staticResourcesGetServerEndpoint 
 backend/src/test/scala/rtl/http/HttpApiTest.scala  / serves the webapp, unknown paths 404, the API wins
 backend/src/test/resources/webapp/index.html     stand-in for the built UI in tests
 docker-compose.yml                      one service, geo volume, ./data read-only for replay
-.github/workflows/ci.yml                tests, UI checks, image build, then fly deploy on main
+.github/workflows/ci.yml                jobs: backend tests + UI checks -> Docker image -> deploy (main)
 fly.toml                                Fly.io app: one always-on 1 GB machine, health check, REQUIRE_BASIC_AUTH
 backend/src/main/scala/rtl/http/HttpConfig.scala  BasicAuthConfig: off / on / required, constant-time check
 backend/src/main/scala/rtl/admin/AdminApi.scala   health is a public endpoint, version is not
