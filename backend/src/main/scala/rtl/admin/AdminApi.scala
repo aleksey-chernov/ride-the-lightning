@@ -11,8 +11,12 @@ import rtl.http.Http.baseEndpoint
 class AdminApi:
   import AdminApi.*
 
+  // health stays open behind basic auth, for the hosting platform's checks
+  val publicEndpoints: List[ServerEndpoint[Any, Identity]] = List(
+    healthEndpoint.handleSuccess(_ => HealthResponse("ok"))
+  )
+
   val endpoints: List[ServerEndpoint[Any, Identity]] = List(
-    healthEndpoint.handleSuccess(_ => HealthResponse("ok")),
     versionEndpoint.handleSuccess(_ => VersionResponse(BuildInfo.name, BuildInfo.version, BuildInfo.scalaVersion))
   )
 

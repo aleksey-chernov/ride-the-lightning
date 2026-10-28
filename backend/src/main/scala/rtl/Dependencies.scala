@@ -33,6 +33,7 @@ object Dependencies:
     val places = PlaceIndex.load(config.geo.cacheDir) // downloads ~4 MB of Natural Earth shapes on the first start
     val ingest = Ingest(strikeSource, Deduplicator(clock), places, window, broadcaster, counters)
 
+    val admin = AdminApi()
     val endpoints =
-      AdminApi().endpoints ++ StrikesApi(window, broadcaster).endpoints ++ StatsApi(window, counters, clock).endpoints
-    Dependencies(HttpApi(endpoints, config.http), ingest, window, counters)
+      admin.endpoints ++ StrikesApi(window, broadcaster).endpoints ++ StatsApi(window, counters, clock).endpoints
+    Dependencies(HttpApi(endpoints, config.http, admin.publicEndpoints), ingest, window, counters)

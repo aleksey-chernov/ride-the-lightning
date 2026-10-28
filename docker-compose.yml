@@ -1,0 +1,17 @@
+# Build the image first: sbt docker/Docker/publishLocal
+services:
+  ride-the-lightning:
+    image: ride-the-lightning:latest
+    ports:
+      - "8080:8080"
+    environment:
+      # live by default; `INGEST_SOURCE=replay docker compose up` plays data/sample.jsonl instead
+      INGEST_SOURCE: ${INGEST_SOURCE:-blitzortung}
+      REPLAY_FILE: /recordings/sample.jsonl
+    volumes:
+      - geo:/opt/docker/data/geo
+      - ./data:/recordings:ro
+
+volumes:
+  # Natural Earth shapes, downloaded on the first start and kept across restarts
+  geo:
