@@ -238,3 +238,33 @@ Append-only. Newest at the bottom. Format: decision, why, rejected alternatives.
 ### D58. Filter state and toggle
 - A Zustand `persist` store in `shared/stores` (`rtl.strikeFilter`, a boolean) read by the map, the stats panel and the header; the switch sits in the app header (switch only below `sm`, label from `sm`). Labels derive from `TIGHT_MDS_NS`.
 - **Rejected:** `useState` in `App` (not persisted, prop drilling); a store inside one feature (cross-feature import); the toggle in the stats card (below the map on phones).
+
+## 2026-10-28
+
+### D59. Packaging with sbt-native-packager
+- A separate `docker` sbt project (as in Bootzooka) depends on `backend`, runs `pnpm install --frozen-lockfile` + `pnpm build` as a resource generator and puts `ui/dist` into its jar under `webapp/`. Built with `sbt docker/Docker/publishLocal` → `ride-the-lightning:latest` on `eclipse-temurin:25-jre`, JVM flags from `.jvmopts` passed through the start script. The project isn't aggregated by `root`, so `compile` and `testFull` never run pnpm.
+- **Rejected:** a hand-written multi-stage Dockerfile (plan and Bootzooka use native-packager); copying the UI into `backend` resources (pnpm on every compile, stale UI on :8080 in dev); a fat jar (sbt-assembly, no image).
+
+### D60. Backend serves the built UI
+- tapir-files `staticResourcesGetServerEndpoint` on `/`, after the API, from `webapp/` on the classpath. No `index.html` fallback: the UI has no client-side routes, and a fallback would answer unknown `/api/v1/*` paths with 200 HTML. Unknown paths get the files endpoint's 404 with an empty body. Same origin, so no CORS or proxy in the image; dev keeps Vite + proxy (D33).
+- **Rejected:** SPA fallback (see above); nginx in front (a second container for static files).
+
+### D61. Container runtime settings
+- The image sets `HTTP_HOST=0.0.0.0` and `GEO_CACHE_DIR=/opt/docker/data/geo`; that directory is created in the image owned by the app user (uid 1001), so a new named volume inherits a writable owner. `docker-compose.yml`: one service on :8080, named volume `geo`, `./data` mounted read-only at `/recordings`; live feed by default, `INGEST_SOURCE=replay` opts into the recording.
+- **Rejected:** bind-mounting `data/geo` (host uid ≠ 1001, not writable); shapes baked into the image (D52 downloads them on first start); replay as the compose default (the image is the real app; the recording stays local, D18).
+
+### D62. CI on GitHub Actions
+- One job on `ubuntu-24.04`: `jdx/mise-action` installs the tools from `.mise.toml`; caches coursier/sbt and `data/geo`; runs `sbt testFull`, UI `lint`, `format:check`, `test`, then `sbt docker/Docker/publishLocal` (builds the UI and the image, pushes nothing). Inert until a remote exists (D12).
+- **Rejected:** `setup-java` + `setup-sbt` + `setup-node` (duplicates `.mise.toml`); publishing the image (local-only project); several parallel jobs (each repeats tool setup for a small build).
+
+### D63. Basic auth in the backend
+- Optional HTTP basic auth (`BASIC_AUTH_USER` / `BASIC_AUTH_PASSWORD`) on every endpoint, Swagger and the UI files, as a Tapir security input mapped to `Unit`; a wrong password decodes as missing, so Tapir answers 401 with the challenge and the browser asks again. `/api/v1/health` stays open for platform checks. Constant-time comparison. `REQUIRE_BASIC_AUTH=true` refuses to start without credentials, so a forgotten secret can't leave a public deployment open. Off by default for local dev.
+- **Rejected:** a Caddy/nginx sidecar (a second process to configure); Cloudflare Access (needs a domain on Cloudflare); `fly proxy` only (no URL to open from a phone); a password check in the UI (anyone can call the API directly).
+
+### D64. Hosting on Fly.io
+- Private deployment for the owner only, behind basic auth (D63), so the Blitzortung feed isn't republished. One `shared-cpu-1x` 1 GB machine in `ams`, never stopped (`auto_stop_machines = "off"`, deploy with `--ha=false`): ingest must keep running, and a second machine would open a second Blitzortung connection. Fly's remote builder builds the image from `docker/Docker/stage`, so no local Docker is needed. No volume: the shapes (~4 MB) download on each machine start. Heap = 60% of the container's memory (`-XX:MaxRAMPercentage=60`). flyctl pinned in `.mise.toml`.
+- **Rejected:** free tiers that sleep (Render, Koyeb: ingest stops); free VMs (GCP e2-micro, Oracle: more admin, Oracle reclaims idle instances); a VPS (cheaper per GB, but OS and Docker upkeep); a Fly volume (root-owned, the app runs as uid 1001); a public deployment (Blitzortung terms).
+
+### D65. Deploy from CI
+- The last step of the CI job runs `fly deploy` on pushes to `main`, after tests, UI checks and the image build pass, with `--local-only`: flyctl builds the staged context with the runner's Docker (layers cached from the check build, so it's the image that was checked) and pushes it to Fly's registry. Locally, without Docker, `--remote-only` builds on Fly's builder instead. Auth is an app-scoped Fly deploy token in the `FLY_API_TOKEN` repo secret. Runs are serialized per branch (`concurrency`), so two pushes can't deploy over each other. Pull requests run the checks only.
+- **Rejected:** `--remote-only` in CI (builds the image a second time on Fly); dropping the image check for Fly's build only (PRs would no longer check the image); a separate deploy job (repeats tool setup and the UI build); an org-wide Fly token (more access than deploying one app); pushing the image to ghcr.io first (Fly's remote builder already stores it in its registry).

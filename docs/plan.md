@@ -8,6 +8,7 @@ StrikeSource (Blitzortung | Replay) --Flow[Strike]--> Ingest: Deduplicator --> P
    StrikeWindow --> GET /api/v1/strikes/recent
    StrikeWindow --> Stats.compute (optional maxMds filter; per-minute, per-place, 0.5° hotspots, detection percentiles) --> GET /api/v1/stats?maxMds=
    Ingest --> StrikeBroadcaster --> GET /api/v1/strikes/stream (SSE, one bounded queue per client)
+   classpath webapp/ (built UI, docker image only) --> GET /
 ```
 
 ## Phases
@@ -21,7 +22,7 @@ StrikeSource (Blitzortung | Replay) --Flow[Strike]--> Ingest: Deduplicator --> P
 - [x] **6a. Frontend structure and tooling.** `app/api/features/shared` layout, containers vs components, Zustand, Orval-generated API, response contract, Prettier/Stylelint/Oxlint rules, exact versions (`docs/frontend-conventions.md`).
 - [x] **7. Stats panel.** shadcn cards, Recharts per-minute rate, hotspots table with fly-to, place names (countries/seas). Uses the generated `useGetStats` hook.
 - [x] **8. Richer stats.** Stations used per strike, detection percentiles (stations, delay, mds), `mds` timing-spread filter, 0.5° hotspots.
-- [ ] **9. Packaging.** sbt-native-packager single image (backend serves UI), docker-compose, GitHub Actions CI.
+- [x] **9. Packaging.** sbt-native-packager single image (`docker` project bundles the built UI, backend serves it at `/`), docker-compose with a shapes volume, GitHub Actions CI (tests, UI checks, image build), private Fly.io deployment behind basic auth.
 - [ ] **10. Persistence.** Postgres (compose), Flyway, Magnum, batched inserts, hourly aggregates, history endpoints, embedded-PG tests.
 
 Stretch: `GlmSource` (NOAA), OpenTelemetry + `grafana/otel-lgtm`, H3 hexbins, storm-cell tracking, MTG LI, globe projection.
