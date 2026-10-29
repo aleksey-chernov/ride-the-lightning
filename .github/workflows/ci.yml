@@ -41,7 +41,10 @@ jobs:
         with:
           report_paths: target/out/jvm/scala-3.9.0/backend/test-reports/TEST-*.xml
           check_name: ScalaTest report
+          # every test, grouped by suite (without include_passed the table lists failures only)
           detailed_summary: true
+          include_passed: true
+          group_suite: true
           annotate_only: true
 
   ui:

@@ -276,6 +276,6 @@ Append-only. Newest at the bottom. Format: decision, why, rejected alternatives.
 ## 2026-10-29
 
 ### D67. CI test reports and action versions
-- `Backend tests` publishes sbt's JUnit XML (`backend/test-reports/TEST-*.xml`) with `mikepenz/action-junit-report@v6` as a per-suite table in the run summary, also when tests fail (`!cancelled()`), next to Vitest's built-in summary for `UI checks`. `annotate_only`, so no check run and no extra token permissions.
+- `Backend tests` publishes sbt's JUnit XML (`backend/test-reports/TEST-*.xml`) with `mikepenz/action-junit-report@v6` as a totals table plus every test grouped by suite (`include_passed`, `group_suite`; without them a green run shows an empty "No test annotations available" table) in the run summary, also when tests fail (`!cancelled()`), next to Vitest's built-in summary for `UI checks`. `annotate_only`, so no check run and no extra token permissions.
 - Actions on Node 24 to clear GitHub's Node 20 deprecation warnings: `actions/cache@v6`, `jdx/mise-action@v5` (its new 24 h minimum release age applies to the mise binary only; tool versions stay pinned in `.mise.toml`).
 - **Rejected:** `dorny/test-reporter` (creates a check run, needs `checks: write`); a hand-written XML-to-Markdown script (more code to maintain).
