@@ -17,7 +17,7 @@ class AdminApi:
   )
 
   val endpoints: List[ServerEndpoint[Any, Identity]] = List(
-    versionEndpoint.handleSuccess(_ => VersionResponse(BuildInfo.name, BuildInfo.version, BuildInfo.scalaVersion))
+    versionEndpoint.handleSuccess(_ => VersionResponse(BuildInfo.name, BuildInfo.version, BuildInfo.commit, BuildInfo.scalaVersion))
   )
 
 object AdminApi:
@@ -25,6 +25,6 @@ object AdminApi:
   val versionEndpoint = baseEndpoint.get.in("version").out(jsonBody[VersionResponse]).tag("admin")
 
   case class HealthResponse(status: String) derives ConfiguredJsonValueCodec, Schema
-  case class VersionResponse(name: String, version: String, scalaVersion: String)
+  case class VersionResponse(name: String, version: String, commit: String, scalaVersion: String)
       derives ConfiguredJsonValueCodec,
         Schema

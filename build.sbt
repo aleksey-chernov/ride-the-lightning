@@ -27,7 +27,8 @@ def freshResources(config: Configuration) = config / compile := Def.uncached(Def
 }.value)
 
 ThisBuild / organization := "rtl"
-ThisBuild / version := "0.1.0-SNAPSHOT"
+// MAJOR.MINOR is set here by hand; CI passes its run number as PATCH, so a local build is 1.0.0-dev
+ThisBuild / version := s"1.0.${sys.env.getOrElse("BUILD_NUMBER", "0-dev")}"
 ThisBuild / scalaVersion := "3.9.0"
 
 lazy val backend = project
@@ -51,7 +52,12 @@ lazy val backend = project
       "com.softwaremill.sttp.tapir" %% "tapir-sttp-stub4-server" % tapirVersion % Test
     ),
     scalacOptions ++= Seq("-deprecation", "-feature", "-Wunused:all"),
-    buildInfoKeys := Seq[BuildInfoKey](BuildInfoKey("name" -> "ride-the-lightning"), version, scalaVersion),
+    buildInfoKeys := Seq[BuildInfoKey](
+      BuildInfoKey("name" -> "ride-the-lightning"),
+      version,
+      BuildInfoKey("commit" -> sys.env.getOrElse("BUILD_COMMIT", "local")),
+      scalaVersion
+    ),
     buildInfoPackage := "rtl",
     Compile / mainClass := Some("rtl.Main"),
     // separate JVM so Ctrl+C / reStop cleanly stop the app

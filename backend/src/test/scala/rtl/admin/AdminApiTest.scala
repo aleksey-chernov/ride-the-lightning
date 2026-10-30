@@ -4,6 +4,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import sttp.client4.*
 import sttp.tapir.server.stub4.TapirSyncStubInterpreter
+import rtl.BuildInfo
 import rtl.http.{HttpApi, HttpConfig}
 
 class AdminApiTest extends AnyFlatSpec with Matchers:
@@ -21,7 +22,10 @@ class AdminApiTest extends AnyFlatSpec with Matchers:
 
   "GET /api/v1/version" should "return build info" in {
     val response = basicRequest.get(uri"http://test/api/v1/version").send(backend)
-    response.body.toOption.get should include("\"name\":\"ride-the-lightning\"")
+    val body = response.body.toOption.get
+    body should include("\"name\":\"ride-the-lightning\"")
+    body should include(s"\"version\":\"${BuildInfo.version}\"")
+    body should include(s"\"commit\":\"${BuildInfo.commit}\"")
   }
 
   "unknown path" should "return a JSON 404" in {

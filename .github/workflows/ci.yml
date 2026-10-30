@@ -82,6 +82,10 @@ jobs:
           key: sbt-${{ hashFiles('build.sbt', 'project/plugins.sbt', 'project/build.properties') }}
       # builds the UI and the image ride-the-lightning:latest with the runner's Docker
       - run: sbt docker/Docker/publishLocal
+        env:
+          # the app reports these: PATCH of the version, and the exact commit
+          BUILD_NUMBER: ${{ github.run_number }}
+          BUILD_COMMIT: ${{ github.sha }}
       # on main, the deploy job below deploys exactly this image
       - name: Push to Fly's registry
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
