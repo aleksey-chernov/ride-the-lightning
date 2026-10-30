@@ -27,8 +27,8 @@ ui/src/
 │   ├── components/          presentational building blocks (e.g. connection-badge)
 │   ├── components/ui/       shadcn components (generated into the repo, then ours)
 │   ├── lib/                 fetch-json (HTTP client for src/api), shadcn utils
-│   ├── stores/              Zustand stores read by ≥ 2 features or the app (e.g. strike-filter)
-│   ├── utils/               pure helpers shared across features (e.g. units: formatMicros)
+│   ├── stores/              Zustand stores read by ≥ 2 features or the app (none yet)
+│   ├── utils/               pure helpers shared across features (e.g. units: formatSeconds)
 │   └── types/
 └── styles/globals.css       Tailwind + theme tokens only
 ```
@@ -60,8 +60,8 @@ Enforced by Oxlint (`no-restricted-imports` overrides per folder in `.oxlintrc.j
 |---|---|---|
 | Server state (data owned by the backend) | react-query, via the generated hooks in `src/api` | `useGetVersion()` |
 | Client state shared across components | a Zustand store per concern, in `features/*/stores/*.store.ts` | `useLiveFeedStore` |
-| Client state used by ≥ 2 features | a Zustand store in `shared/stores/*.store.ts` | `useStrikeFilterStore` |
-| Remembered UI preferences | Zustand `persist` middleware (localStorage), in the store that owns them | `useStrikeFilterStore` (`rtl.strikeFilter`) |
+| Client state used by ≥ 2 features | a Zustand store in `shared/stores/*.store.ts` | none yet |
+| Remembered UI preferences | Zustand `persist` middleware (localStorage), in the store that owns them | none yet |
 | High-frequency data | plain objects outside React, read by timers | `StrikeBuffer` (strikes for the map) |
 | Local UI state | `useState` in the component | a hover flag |
 

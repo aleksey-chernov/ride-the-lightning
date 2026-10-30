@@ -1,5 +1,7 @@
 # Phase 8: richer stats
 
+> Later removed (D78): the timing-spread switch and `?maxMds` filter, and the stations-used and timing-spread statistics. The station count and `mds` are still decoded and stored, but no longer served. What follows describes the phase as built.
+
 ## Run it
 ```bash
 INGEST_SOURCE=replay sbt ~backend/reStart   # or REPLAY_SPEED=5 for busier stats

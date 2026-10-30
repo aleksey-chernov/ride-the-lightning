@@ -2,11 +2,14 @@
 
 Each phase ends runnable and gets its own commit. Tick when done.
 
-## Architecture (in-memory)
+## Architecture
 ```
 StrikeSource (Blitzortung | Replay) --Flow[Strike]--> Ingest: Deduplicator --> PlaceIndex (Natural Earth) --> StrikeWindow (last 60 min)
+   Ingest --> StrikeWriter (bounded queue, batches) --> history.db (SQLite, 7 days; live source only) <-- Retention (hourly)
+   history.db --> refill on start --> StrikeWindow + Deduplicator
+   history.db --> GET /api/v1/history/range, /history/strikes?from&to (thinned) --> UI Playback mode
    StrikeWindow --> GET /api/v1/strikes/recent
-   StrikeWindow --> Stats.compute (optional maxMds filter; per-minute, per-place, 0.5° hotspots, detection percentiles) --> GET /api/v1/stats?maxMds=
+   StrikeWindow --> Stats.compute (per-minute, per-place, 0.5° hotspots, delay percentiles) --> GET /api/v1/stats
    Ingest --> StrikeBroadcaster --> GET /api/v1/strikes/stream (SSE, one bounded queue per client)
    classpath webapp/ (built UI, docker image only) --> GET /
 ```
@@ -21,9 +24,9 @@ StrikeSource (Blitzortung | Replay) --Flow[Strike]--> Ingest: Deduplicator --> P
 - [x] **6. Live map.** MapLibre + OpenFreeMap dark, `/strikes/recent` + EventSource → `StrikeBuffer` → `setData` every 500 ms, heatmap + fading dots, live status, Vitest.
 - [x] **6a. Frontend structure and tooling.** `app/api/features/shared` layout, containers vs components, Zustand, Orval-generated API, response contract, Prettier/Stylelint/Oxlint rules, exact versions (`docs/frontend-conventions.md`).
 - [x] **7. Stats panel.** shadcn cards, Recharts per-minute rate, hotspots table with fly-to, place names (countries/seas). Uses the generated `useGetStats` hook.
-- [x] **8. Richer stats.** Stations used per strike, detection percentiles (stations, delay, mds), `mds` timing-spread filter, 0.5° hotspots.
+- [x] **8. Richer stats.** Stations used per strike, detection percentiles (stations, delay, mds), `mds` timing-spread filter, 0.5° hotspots. (Filter, stations and `mds` stats removed later, D78.)
 - [x] **9. Packaging.** sbt-native-packager single image (`docker` project bundles the built UI, backend serves it at `/`), docker-compose with a shapes volume, GitHub Actions CI (tests, UI checks, image build), private Fly.io deployment behind basic auth.
-- [ ] **10. Persistence.** Postgres (compose), Flyway, Magnum, batched inserts, hourly aggregates, history endpoints, embedded-PG tests.
+- [x] **10. Persistence and playback.** SQLite file on a Fly volume (WAL), Flyway, Magnum, a non-blocking batch writer (drop when full), 7-day retention, window refill on restart, `/history/range` + `/history/strikes` (thinned), map Playback mode (presets, slider, speeds), entrypoint that chowns the data volume.
 
 Stretch: `GlmSource` (NOAA), OpenTelemetry + `grafana/otel-lgtm`, H3 hexbins, storm-cell tracking, MTG LI, globe projection.
 
