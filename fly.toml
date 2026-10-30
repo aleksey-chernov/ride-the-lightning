@@ -18,12 +18,18 @@ primary_region = "ams"
   min_machines_running = 1
 
   [[http_service.checks]]
-    # the first start downloads the place shapes before the server listens
+    # a start on a new volume downloads the place shapes before the server listens
     grace_period = "60s"
     interval = "30s"
     timeout = "5s"
     method = "GET"
     path = "/api/v1/health"
+
+# one-time, before the first deploy with it: fly volumes create data -a ride-the-lightning --region ams --size 1 --snapshot-retention 7 --yes
+# shapes and history.db live here; the machine stays on the volume's host
+[[mounts]]
+  source = "data"
+  destination = "/opt/docker/data"
 
 [[vm]]
   size = "shared-cpu-1x"

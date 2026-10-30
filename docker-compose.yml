@@ -9,9 +9,9 @@ services:
       INGEST_SOURCE: ${INGEST_SOURCE:-blitzortung}
       REPLAY_FILE: /recordings/sample.jsonl
     volumes:
-      - geo:/opt/docker/data/geo
+      - data:/opt/docker/data
       - ./data:/recordings:ro
 
 volumes:
-  # Natural Earth shapes, downloaded on the first start and kept across restarts
-  geo:
+  # Natural Earth shapes (downloaded on the first start) and the strike history, kept across restarts
+  data:

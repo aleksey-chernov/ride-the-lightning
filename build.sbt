@@ -93,16 +93,22 @@ lazy val docker = project
     Universal / javaOptions ++= (jvmFlags :+ "-XX:MaxRAMPercentage=60").map("-J" + _),
     dockerBaseImage := "eclipse-temurin:25-jre",
     dockerExposedPorts := Seq(8080),
-    // listen on all interfaces inside the container; shapes go to a volume (see docker-compose.yml)
-    dockerEnvVars := Map("HTTP_HOST" -> "0.0.0.0", "GEO_CACHE_DIR" -> "/opt/docker/data/geo"),
-    // the app user (1001) must own the shapes dir: a new named volume copies the image dir's owner
+    // listen on all interfaces inside the container; shapes and history go to the data volume (see docker-compose.yml, fly.toml)
+    dockerEnvVars := Map(
+      "HTTP_HOST" -> "0.0.0.0",
+      "GEO_CACHE_DIR" -> "/opt/docker/data/geo",
+      "HISTORY_FILE" -> "/opt/docker/data/history.db"
+    ),
+    // the entrypoint starts as root, chowns the mounted data dir and drops to uid 1001 (see docker-entrypoint.sh)
+    dockerEntrypoint := Seq("/opt/docker/bin/docker-entrypoint.sh"),
+    // replaces the final `USER 1001:0` (the entrypoint drops to it) with the data dir owned by the app user; a new named volume copies that owner
     dockerCommands := {
       val cmds = dockerCommands.value
       val switchToAppUser = cmds.lastIndexWhere { case Cmd("USER", _*) => true; case _ => false }
       cmds.patch(
         switchToAppUser,
-        Seq(ExecCmd("RUN", "install", "-d", "-o", "1001", "-g", "0", "/opt/docker/data/geo")),
-        0
+        Seq(ExecCmd("RUN", "install", "-d", "-o", "1001", "-g", "0", "/opt/docker/data")),
+        1
       )
     },
     Docker / packageName := "ride-the-lightning",
