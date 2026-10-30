@@ -10,6 +10,22 @@ val reStart = taskKey[Unit]("(Re)starts the backend in the background; `~backend
 val reStop = taskKey[Unit]("Stops the backend started with reStart")
 val buildUi = taskKey[Seq[File]]("Builds the UI with pnpm and copies ui/dist to the webapp resources")
 
+// A cached compile restores target/.../(test-)classes from sbt 2's cache, old resources included, and IntelliJ runs
+// rtl.Main and the tests from there: rewrite the current resources after every compile (copyResources' cache misses this)
+def freshResources(config: Configuration) = config / compile := Def.uncached(Def.taskDyn {
+  val analysis = (config / compile).value
+  Def.task {
+    val classes = (config / classDirectory).value
+    val dirs = (config / resourceDirectories).value
+    for ((file, path) <- (config / resources).value.filter(_.isFile).pair(Path.relativeTo(dirs))) {
+      val target = classes / path
+      java.nio.file.Files.deleteIfExists(target.toPath) // may be a symlink into the read-only cache
+      IO.copyFile(file, target)
+    }
+    analysis
+  }
+}.value)
+
 ThisBuild / organization := "rtl"
 ThisBuild / version := "0.1.0-SNAPSHOT"
 ThisBuild / scalaVersion := "3.9.0"
@@ -41,21 +57,8 @@ lazy val backend = project
     // separate JVM so Ctrl+C / reStop cleanly stop the app
     run / fork := true,
     run / javaOptions ++= jvmFlags,
-    // a cached compile restores target/.../classes from sbt 2's cache, old resources included, and IntelliJ runs
-    // rtl.Main from there: rewrite the current resources after every compile (copyResources' own cache misses this)
-    Compile / compile := Def.uncached(Def.taskDyn {
-      val analysis = (Compile / compile).value
-      Def.task {
-        val classes = (Compile / classDirectory).value
-        val dirs = (Compile / resourceDirectories).value
-        for ((file, path) <- (Compile / resources).value.filter(_.isFile).pair(Path.relativeTo(dirs))) {
-          val target = classes / path
-          java.nio.file.Files.deleteIfExists(target.toPath) // may be a symlink into the read-only cache
-          IO.copyFile(file, target)
-        }
-        analysis
-      }
-    }.value),
+    freshResources(Compile),
+    freshResources(Test),
     reStop := Def.uncached {
       val jobService = bgJobService.value
       val thisProject = Select(thisProjectRef.value)
