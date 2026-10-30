@@ -5,6 +5,7 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.ConfiguredJsonValueCodec
 import rtl.strikes.Strike
 
 import java.time.Instant
+import java.time.temporal.ChronoUnit.MICROS
 import scala.util.Try
 
 /** Decoded Blitzortung JSON; unknown fields are ignored, optional ones default to 0. */
@@ -23,7 +24,7 @@ case class BlitzortungMessage(
     sig: List[BlitzortungStation] = Nil
 ) derives ConfiguredJsonValueCodec:
   def toStrike: Strike = Strike(
-    time = Instant.ofEpochSecond(0, time),
+    time = Instant.ofEpochSecond(0, time).truncatedTo(MICROS), // µs, the precision we store
     lat = lat + latc,
     lon = lon + lonc,
     region = region,

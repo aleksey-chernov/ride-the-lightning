@@ -17,6 +17,11 @@ class Deduplicator(clock: Clock, memory: Duration = Duration.ofMinutes(1)):
     if !duplicate then seen.enqueue((now, strike))
     !duplicate
 
+  /** Remembers strikes from the last `memory` (e.g. restored after a restart), so late copies are still dropped. */
+  def remember(strikes: Seq[Strike]): Unit =
+    val start = clock.instant().minus(memory)
+    strikes.filterNot(_.time.isBefore(start)).foreach(isNew(_).discard)
+
 object Deduplicator:
   val MaxTimeDiff: Duration = Duration.ofMillis(1)
   val MaxDegreesDiff = 0.02 // ~2 km

@@ -8,7 +8,6 @@ import rtl.http.ResponseContract.given
 import sttp.model.sse.ServerSentEvent
 import sttp.shared.Identity
 import sttp.tapir.*
-import sttp.tapir.Schema.annotations.description
 import sttp.tapir.json.jsoniter.*
 import sttp.tapir.server.ServerEndpoint
 import sttp.tapir.server.netty.sync.{OxStreams, serverSentEventsBody}
@@ -62,15 +61,12 @@ case class StrikeResponse(
     lat: Double,
     lon: Double,
     region: Int,
-    @description("Stations whose signal was used, among at most 40 reported; a lower bound when that list is full")
-    stations: Int,
-    delaySeconds: Double,
-    mds: Int
+    delaySeconds: Double
 ) derives ConfiguredJsonValueCodec,
       Schema
 
 object StrikeResponse:
   def from(s: Strike): StrikeResponse =
-    StrikeResponse(s.time, s.lat, s.lon, s.region, s.stations, s.delaySeconds, s.mds)
+    StrikeResponse(s.time, s.lat, s.lon, s.region, s.delaySeconds)
 
 case class RecentStrikesResponse(strikes: List[StrikeResponse]) derives ConfiguredJsonValueCodec, Schema

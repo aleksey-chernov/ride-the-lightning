@@ -28,3 +28,18 @@ class StrikeWindowTest extends AnyFlatSpec with Matchers:
 
     window.snapshot.map(_.time) shouldBe Vector(clock.now)
   }
+
+  "addAll" should "merge strikes in time order and drop those older than the window" in {
+    val clock = TestClock()
+    val window = StrikeWindow(Duration.ofMinutes(60), clock)
+    window.add(strike(clock.now.minus(Duration.ofMinutes(10)), lat = 2))
+    window.addAll(
+      Seq(
+        strike(clock.now.minus(Duration.ofMinutes(5)), lat = 3),
+        strike(clock.now.minus(Duration.ofMinutes(61)), lat = 0),
+        strike(clock.now.minus(Duration.ofMinutes(30)), lat = 1)
+      )
+    )
+
+    window.snapshot.map(_.lat) shouldBe Vector(1, 2, 3)
+  }

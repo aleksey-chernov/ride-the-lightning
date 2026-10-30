@@ -7,20 +7,12 @@ import java.time.temporal.ChronoUnit.MINUTES
 import java.time.{Duration, Instant}
 
 object Stats:
-  /** Pure: same inputs, same output, so it's trivial to test. `maxMds` keeps strikes with `0 < mds <= maxMds`. */
-  def compute(
-      strikes: Vector[Strike],
-      received: Long,
-      duplicates: Long,
-      now: Instant,
-      maxMds: Option[Int] = None
-  ): StatsResponse =
-    def since(minutes: Int)(in: Vector[Strike]) = in.filterNot(_.time.isBefore(now.minus(Duration.ofMinutes(minutes))))
-    val kept = maxMds.fold(strikes)(max => strikes.filter(s => s.mds > 0 && s.mds <= max))
-    val last10 = since(10)(kept)
-    val lastHour = since(60)(kept)
+  /** Pure: same inputs, same output, so it's trivial to test. */
+  def compute(strikes: Vector[Strike], received: Long, duplicates: Long, now: Instant): StatsResponse =
+    def since(minutes: Int) = strikes.filterNot(_.time.isBefore(now.minus(Duration.ofMinutes(minutes))))
+    val last10 = since(10)
 
-    val byMinute = kept.groupMapReduce(_.time.truncatedTo(MINUTES))(_ => 1)(_ + _)
+    val byMinute = strikes.groupMapReduce(_.time.truncatedTo(MINUTES))(_ => 1)(_ + _)
     val currentMinute = now.truncatedTo(MINUTES)
     val perMinute = (59 to 0 by -1).toList.map { ago =>
       val minute = currentMinute.minus(ago, MINUTES)
@@ -43,24 +35,18 @@ object Stats:
         Hotspot(lat + CellDegrees / 2, lon + CellDegrees / 2, mostCommon(inCell.map(placeOf)).name, inCell.size)
       }
 
-    val detection = Detection(
-      percentiles(last10.map(_.stations.toDouble)),
-      percentiles(last10.map(_.delaySeconds).filter(_ > 0)), // 0 means missing
-      percentiles(last10.map(_.mds).filter(_ > 0).map(_.toDouble))
-    )
+    val detection = Detection(percentiles(last10.map(_.delaySeconds).filter(_ > 0))) // 0 means missing
 
     StatsResponse(
       generatedAt = now,
       received = received,
       duplicatesDropped = duplicates,
-      lastMinute = since(1)(kept).size,
+      lastMinute = since(1).size,
       last10Minutes = last10.size,
-      lastHour = lastHour.size,
+      lastHour = since(60).size,
       perMinute = perMinute,
       places = places,
       hotspots = hotspots,
-      maxMds = maxMds,
-      filteredOut = since(60)(strikes).size - lastHour.size,
       detection = detection
     )
 

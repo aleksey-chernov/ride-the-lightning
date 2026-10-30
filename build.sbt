@@ -28,6 +28,9 @@ lazy val backend = project
       "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % "2.41.5",
       "com.github.pureconfig" %% "pureconfig-core" % "0.17.10",
       "ch.qos.logback" % "logback-classic" % "1.6.5",
+      "com.augustnagro" %% "magnum" % "1.3.1",
+      "org.xerial" % "sqlite-jdbc" % "3.53.4.0",
+      "org.flywaydb" % "flyway-core" % "13.10.0", // SQLite support is built into core
       "org.scalatest" %% "scalatest" % "3.2.20" % Test,
       "com.softwaremill.sttp.tapir" %% "tapir-sttp-stub4-server" % tapirVersion % Test
     ),
@@ -38,6 +41,21 @@ lazy val backend = project
     // separate JVM so Ctrl+C / reStop cleanly stop the app
     run / fork := true,
     run / javaOptions ++= jvmFlags,
+    // a cached compile restores target/.../classes from sbt 2's cache, old resources included, and IntelliJ runs
+    // rtl.Main from there: rewrite the current resources after every compile (copyResources' own cache misses this)
+    Compile / compile := Def.uncached(Def.taskDyn {
+      val analysis = (Compile / compile).value
+      Def.task {
+        val classes = (Compile / classDirectory).value
+        val dirs = (Compile / resourceDirectories).value
+        for ((file, path) <- (Compile / resources).value.filter(_.isFile).pair(Path.relativeTo(dirs))) {
+          val target = classes / path
+          java.nio.file.Files.deleteIfExists(target.toPath) // may be a symlink into the read-only cache
+          IO.copyFile(file, target)
+        }
+        analysis
+      }
+    }.value),
     reStop := Def.uncached {
       val jobService = bgJobService.value
       val thisProject = Select(thisProjectRef.value)

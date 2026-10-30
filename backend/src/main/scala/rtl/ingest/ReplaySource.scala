@@ -7,6 +7,7 @@ import rtl.ingest.blitzortung.BlitzortungMessage
 import rtl.strikes.Strike
 
 import java.nio.file.{Files, Path}
+import java.time.temporal.ChronoUnit.MICROS
 import java.time.{Duration, Instant}
 import scala.jdk.CollectionConverters.*
 
@@ -20,7 +21,7 @@ class ReplaySource(config: ReplayConfig) extends StrikeSource with Logging:
       val loopStart = Instant.now()
       recorded.foreach { strike =>
         val offsetNanos = (Duration.between(first, strike.time).toNanos / config.speed).toLong
-        val due = loopStart.plusNanos(offsetNanos)
+        val due = loopStart.plusNanos(offsetNanos).truncatedTo(MICROS)
         val wait = Duration.between(Instant.now(), due)
         if !wait.isNegative then sleep(scala.concurrent.duration.Duration.fromNanos(wait.toNanos))
         emit(strike.copy(time = due))

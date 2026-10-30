@@ -14,22 +14,14 @@ class StatsApi(window: StrikeWindow, counters: IngestCounters, clock: Clock):
   import StatsApi.*
 
   val endpoints: List[ServerEndpoint[Any, Identity]] = List(
-    statsEndpoint.handleSuccess { maxMds =>
-      Stats.compute(window.snapshot, counters.received.get, counters.duplicates.get, clock.instant(), maxMds)
+    statsEndpoint.handleSuccess { _ =>
+      Stats.compute(window.snapshot, counters.received.get, counters.duplicates.get, clock.instant())
     }
   )
 
 object StatsApi:
   val statsEndpoint = baseEndpoint.get
     .in("stats")
-    .in(
-      query[Option[Int]]("maxMds")
-        .validateOption(Validator.inRange(1, 1_000_000))
-        .description("Keep only strikes with 0 < mds <= maxMds (timing spread in ns); omit to keep all")
-    )
     .out(jsonBody[StatsResponse])
-    .description(
-      "Counts per minute, place and 0.5° hotspot plus detection percentiles, computed from the in-memory window; " +
-        "`maxMds` keeps strikes whose timing spread is at most that many ns"
-    )
+    .description("Counts per minute, place and 0.5° hotspot plus delay percentiles, computed from the in-memory window")
     .tag("stats")
