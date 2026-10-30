@@ -1,13 +1,13 @@
 # Ride the Lightning
 
-Educational, local-only app: Scala 3 backend ingests the Blitzortung live lightning feed, aggregates stats in memory, streams to a React + shadcn/ui map. The owner is **new to Scala**, so work moves in small, runnable phases.
+Educational app, deployed privately behind a login: Scala 3 backend ingests the Blitzortung live lightning feed, aggregates stats in memory, keeps 7 days of history in SQLite, streams to a React + shadcn/ui map. The owner is **new to Scala**, so work moves in small, runnable phases.
 
 ## Before doing anything
 1. Read `docs/decisions.md`. Don't re-propose rejected options unless new facts appear.
 2. Read `docs/plan.md` for the current phase and next step.
 
 ## Rules
-- **Log decisions:** any decision reached in conversation is appended to `docs/decisions.md` in the same turn (date, decision, why, rejected).
+- **Log decisions:** any decision reached in conversation goes into `docs/decisions.md` in the same turn, under its topic (date, decision, why, rejected). If it changes an older decision, rewrite that entry instead of adding a contradiction.
 - **Comments:** short one-liners, strictly to the point, only where code isn't self-explanatory. Concept explanations go in `docs/phase-N.md`.
 - One phase at a time: implement → user runs it → tick `docs/plan.md` → commit.
 - **Commits:** single line, starts with a capital letter, no type/area prefix (e.g. `Add health endpoint`). One sentence: no trailing period; several sentences: normal punctuation.
@@ -26,6 +26,7 @@ Educational, local-only app: Scala 3 backend ingests the Blitzortung live lightn
 - Record live data: `sbt "backend/runMain rtl.ingest.Record 600"` → `data/sample.jsonl`
 - Place shapes: downloaded from Natural Earth (pinned commit) into `data/geo/` on the first backend start or test run; delete the folder to re-download
 - Strike history: SQLite file `data/history.db` (`HISTORY_FILE`; image: `/opt/docker/data/history.db` on the `data` volume), written only with the live source; replay reads it (`INGEST_SOURCE=replay HISTORY_FILE=<copy> sbt ~backend/reStart` to develop playback offline); `HISTORY_ENABLED=false` turns it off; schema changes go in a new `backend/src/main/resources/db/migration/V<n>__*.sql`
+- Version: `MAJOR.MINOR` by hand in `build.sbt`, `PATCH` = CI run number (`BUILD_NUMBER`), `BUILD_COMMIT` = sha; local builds are `1.0.0-dev`; `GET /api/v1/version` and the footer show it
 - Tests: `sbt testFull` (plain `test` only reruns affected tests in sbt 2)
 - UI dev: `cd ui && pnpm dev` (http://localhost:5173, proxies `/api` to :8080)
 - UI checks: `pnpm lint` (Oxlint + Stylelint), `pnpm format:check`, `pnpm test`, `pnpm build`; fix with `pnpm lint:fix`, `pnpm format`

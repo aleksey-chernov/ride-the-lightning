@@ -1,6 +1,6 @@
 # Phase 8: richer stats
 
-> Later removed (D78): the timing-spread switch and `?maxMds` filter, and the stations-used and timing-spread statistics. The station count and `mds` are still decoded and stored, but no longer served. What follows describes the phase as built.
+> Later removed (D78): the timing-spread switch and `?maxMds` filter, and the stations-used and timing-spread statistics. The station count and `mds` are still decoded and stored, but no longer served. What follows describes the phase as built; the `Try` list below has been cut down to what still works.
 
 ## Run it
 ```bash
@@ -76,8 +76,6 @@ The stream (`/strikes/stream`) and `/strikes/recent` are **not** filtered (D55).
 - **A filter that doesn't drop data**: `StrikeBuffer` keeps every strike and applies `maxMds` only when it builds a snapshot. Strikes that don't pass are still evicted by age. `StrikeMap` lists `maxMds` in its effect dependencies and pushes one `setData` immediately when it changes, so the map responds at once instead of on the next 500 ms tick.
 
 ## Try
-1. Set `TIGHT_MDS_NS = 7_500` in `shared/stores/strike-filter.store.ts`, turn the switch on and compare the hidden count. The labels follow the constant.
-2. Compare the list size with the stations actually used in the sample:
+1. Compare the list size with the stations actually used in the sample:
    `jq -c '[(.sig|length), ([.sig[] | select((.status // 0) % 8 >= 4)] | length), .mds]' data/sample.jsonl | head -20`
-3. Set `CellDegrees = 1.0` in `Stats.scala`. The Catalonia cluster merges back into one hotspot, and the tests fail until you update them.
-4. `curl 'localhost:8080/api/v1/stats?maxMds=3000'` and watch most strikes disappear into `filteredOut`.
+2. Set `CellDegrees = 1.0` in `Stats.scala`. The Catalonia cluster merges back into one hotspot, and the tests fail until you update them.

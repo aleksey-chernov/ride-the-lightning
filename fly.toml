@@ -1,5 +1,5 @@
 # Fly.io app. Deploy: sbt docker/Docker/stage, then
-#   fly deploy target/out/jvm/scala-3.9.0/docker/docker/stage --config fly.toml --ha=false
+#   fly deploy target/out/jvm/scala-3.9.0/docker/docker/stage --config "$PWD/fly.toml" --ha=false --remote-only
 # Login comes from secrets: fly secrets set BASIC_AUTH_USER=... BASIC_AUTH_PASSWORD=...
 app = "ride-the-lightning"
 primary_region = "ams"

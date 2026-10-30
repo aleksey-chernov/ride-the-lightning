@@ -16,7 +16,7 @@ strikes/Deduplicator.scala     drops repeats of the same strike
 strikes/StrikeWindow.scala     last 60 min of strikes, thread-safe, lock-free
 strikes/StrikesConfig.scala    window length from config
 strikes/StrikesApi.scala       GET /strikes/recent?minutes=1..60&limit=1..50000; StrikeResponse, RecentStrikesResponse
-stats/StatsResponse.scala      response types (StatsResponse, MinuteCount, RegionCount, Hotspot)
+stats/StatsResponse.scala      response types (StatsResponse, MinuteCount, PlaceCount, Hotspot)
 stats/Stats.scala              pure compute function → StatsResponse
 stats/StatsApi.scala           GET /stats
 test: TestClock, TestStrikes, DeduplicatorTest, StrikeWindowTest, StatsTest, StrikesApiTest, ConfigTest
@@ -38,7 +38,7 @@ Blitzortung computes strikes per region; where regions overlap, the same strike 
 - **Pure functions**: `Stats.compute(strikes, received, duplicates, now)` reads nothing global (no clock, no state), so tests just call it with fixed inputs.
 - **Injected `Clock`**: anything time-dependent takes a `java.time.Clock`; tests pass `TestClock` and move time by hand (≈ .NET 8 `TimeProvider` / `FakeTimeProvider`).
 - **Collections API**: `groupMapReduce(key)(map)(reduce)` = group, map each, combine (≈ LINQ `GroupBy(...).Select(g => g.Count())` in one pass). `filterNot`, `sortBy`, `take`, `toList`.
-- **Parameter untupling**: `.map((region, count) => RegionCount(region, count))` takes a tuple apart directly.
+- **Parameter untupling**: `.map((place, count) => PlaceCount(place.name, ..., count))` takes a tuple apart directly.
 - **Default arguments**: `Deduplicator(clock, memory = Duration.ofMinutes(1))`; `Dependencies.create(config, clock = Clock.systemUTC())`.
 - **Domain vs response types**: the domain `Strike` has no JSON concerns; `/strikes/recent` returns `RecentStrikesResponse(strikes: List[StrikeResponse])`, built with the factory `StrikeResponse.from(strike)` in the companion object (≈ a static `FromDomain` method or a mapping profile). Wrapping the list in an object leaves room for new fields without breaking clients. API types are named `XResponse` / `XRequest`.
 - **Tapir query parameters**: `query[Int]("minutes").default(15).validate(Validator.inRange(1, 60))` = typed, defaulted, validated, and documented in Swagger; invalid input returns a JSON 400.

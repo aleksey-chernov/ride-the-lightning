@@ -84,7 +84,7 @@ Enforced by Oxlint (`no-restricted-imports` overrides per folder in `.oxlintrc.j
 | Component | `PascalCase` export in `kebab-case.tsx` | `StrikeMap` in `strike-map.tsx` |
 | Hook | `useX` in `use-x.ts` | `useLiveStrikes` |
 | Store | `useXStore` in `x.store.ts` | `useLiveFeedStore` in `live-feed.store.ts` |
-| Pure helpers | `x.utils.ts` | `geo.utils.ts` |
+| Pure helpers | `x.utils.ts` | `units.utils.ts` |
 | Test | next to the file, `x.test.ts` | `strike-buffer.test.ts` |
 | Props type | `Props` (local to the file) | `type Props = { count: number }` |
 | Constants | `UPPER_SNAKE_CASE` | `MAP_STYLE_URL` |

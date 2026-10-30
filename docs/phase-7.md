@@ -5,7 +5,7 @@
 INGEST_SOURCE=replay sbt ~backend/reStart   # or REPLAY_SPEED=5 for busier stats
 cd ui && pnpm dev                           # http://localhost:5173
 ```
-The stats card shows, top to bottom: counts for the last minute, 10 minutes and hour, plus ingest totals and the duplicate rate; a bar chart of strikes per minute over the last hour; the busiest 1° cells (hotspots) of the last 10 minutes, each named after its most common place; the top places (countries and seas, with a wave icon for water). Click a hotspot and the map flies there. Stop the backend: the card keeps the last data and says `Backend unreachable, showing last data`. On a phone (below Tailwind's `lg`, 1024 px) map and stats stack and the page scrolls; picking a hotspot scrolls back up to the map.
+The stats card shows, top to bottom: counts for the last minute, 10 minutes and hour, plus ingest totals and the duplicate rate; a bar chart of strikes per minute over the last hour; the busiest cells (hotspots; 1° at this phase, 0.5° since Phase 8) of the last 10 minutes, each named after its most common place; the top places (countries and seas, with a wave icon for water). Click a hotspot and the map flies there. Stop the backend: the card keeps the last data and says `Backend unreachable, showing last data`. On a phone (below Tailwind's `lg`, 1024 px) map and stats stack and the page scrolls; picking a hotspot scrolls back up to the map.
 
 Checks: `pnpm test`, `pnpm lint`, `pnpm format:check`, `pnpm build`.
 

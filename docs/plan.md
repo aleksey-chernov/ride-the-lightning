@@ -27,6 +27,7 @@ StrikeSource (Blitzortung | Replay) --Flow[Strike]--> Ingest: Deduplicator --> P
 - [x] **8. Richer stats.** Stations used per strike, detection percentiles (stations, delay, mds), `mds` timing-spread filter, 0.5° hotspots. (Filter, stations and `mds` stats removed later, D78.)
 - [x] **9. Packaging.** sbt-native-packager single image (`docker` project bundles the built UI, backend serves it at `/`), docker-compose with a shapes volume, GitHub Actions CI (tests, UI checks, image build), private Fly.io deployment behind basic auth.
 - [x] **10. Persistence and playback.** SQLite file on a Fly volume (WAL), Flyway, Magnum, a non-blocking batch writer (drop when full), 7-day retention, window refill on restart, `/history/range` + `/history/strikes` (thinned), map Playback mode (presets, slider, speeds), entrypoint that chowns the data volume.
+- [x] **Housekeeping.** Traceable version in the footer (`1.0.<CI run>` + commit), docs aligned with the code, decisions merged by topic, `README.md`.
 
 Stretch: `GlmSource` (NOAA), OpenTelemetry + `grafana/otel-lgtm`, H3 hexbins, storm-cell tracking, MTG LI, globe projection.
 

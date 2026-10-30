@@ -5,7 +5,7 @@
 INGEST_SOURCE=replay sbt ~backend/reStart   # terminal 1 (or IntelliJ "Backend (replay)")
 cd ui && pnpm install && pnpm dev           # terminal 2 (or IntelliJ "UI (dev)")
 ```
-Open http://localhost:5173: dark shell, green `backend 0.1.0-SNAPSHOT` badge, placeholders for map and stats. Stop the backend and within 10 s the badge turns into `backend offline`.
+Open http://localhost:5173: dark shell, with the map and stats that later phases added. At this phase it had placeholders and a badge polling `/health`; the badge now follows the live stream (D40).
 
 Checks: `pnpm lint` (Oxlint), `pnpm build` (TypeScript check + production bundle into `ui/dist`).
 
@@ -37,11 +37,10 @@ ui/
 - **pnpm**: package manager (≈ NuGet). `package.json` ≈ `.csproj` dependencies, `pnpm-lock.yaml` ≈ `packages.lock.json`.
 - **Dev proxy**: the browser only talks to :5173; Vite forwards `/api/*` to :8080. Same origin means no CORS, and SSE works through it too. In production (Phase 9) the backend serves the built UI itself, so the same relative `/api` URLs keep working.
 - **Tailwind**: styling with utility classes in markup (`flex h-14 items-center border-b px-4`) instead of separate CSS files. v4 needs no config file, just `@import "tailwindcss"`.
-- **shadcn/ui**: not a dependency you upgrade; the CLI **copies component source** into `src/components/ui`, built on Radix primitives (accessibility, keyboard handling). You own and edit them. Theme colors are CSS variables in `index.css`.
+- **shadcn/ui**: not a dependency you upgrade; the CLI **copies component source** into `src/shared/components/ui`, built on Radix primitives (accessibility, keyboard handling). You own and edit them. Theme colors are CSS variables in `styles/globals.css`.
 - **react-query**: server state in the UI. `useQuery({ queryKey, queryFn })` caches results, tracks `isPending` / `isError` / `data`, retries and refetches (`refetchInterval`). It replaces hand-written `useEffect` + `useState` loading logic.
-- **Components and hooks**: a component is a function returning JSX; hooks (`useHealth`) are functions that let components use state and effects. `BackendStatus` re-renders automatically when the health query changes.
+- **Components and hooks**: a component is a function returning JSX; hooks (`useGetStats`) are functions that let components use state and effects. `StatsPanel` re-renders automatically when the stats query changes.
 
 ## Try
 1. `cd ui && pnpm dlx shadcn@latest add tooltip`, then wrap the status badge in a tooltip showing the Scala version.
-2. Change `refetchInterval` to `2_000` and watch the Network tab in the browser dev tools.
-3. Switch the theme: remove `class="dark"` from `index.html`.
+2. Switch the theme: remove `class="dark"` from `index.html`.

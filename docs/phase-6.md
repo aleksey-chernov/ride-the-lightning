@@ -5,7 +5,7 @@
 INGEST_SOURCE=replay sbt ~backend/reStart   # or REPLAY_SPEED=5 for a busier map
 cd ui && pnpm dev                           # http://localhost:5173
 ```
-The map shows the last 15 minutes: a heatmap glow when zoomed out, one dot per strike when zoomed in. Each strike arriving over the stream flashes (expanding ring + bright core, ~1.5 s); dots then fade from white through yellow and orange to violet and dissolve completely before they're removed at 15 minutes. The header shows the single connection status (`online` / `offline`, backend version on hover), driven by the stream. Stop the backend and the status switches to offline; start it again and the map refills.
+The map shows the last 15 minutes: a heatmap glow when zoomed out, one dot per strike when zoomed in. Each strike arriving over the stream flashes (expanding ring + bright core, ~1.5 s); dots then fade from white through yellow and orange to violet and dissolve completely before they're removed at 15 minutes. The header shows the single connection status (`online` / `offline`), driven by the stream. Stop the backend and the status switches to offline; start it again and the map refills.
 
 Checks: `pnpm test` (Vitest), `pnpm lint`, `pnpm build`.
 
@@ -14,7 +14,7 @@ Paths as of the frontend restructure (see `docs/frontend-conventions.md`):
 ```
 ui/src/features/live-map/
   containers/live-map.tsx        connects the feed, renders the map
-  components/strike-map.tsx      react-map-gl <Map>, GeoJSON source, 500 ms setData loop
+  components/strike-map.tsx      react-map-gl <Map>, GeoJSON source, redraws from `frames` (500 ms live)
   hooks/use-live-strikes.ts      owns buffer + connection, publishes the status to the store
   stores/live-feed.store.ts      Zustand: connection status (read by the app header)
   lib/strike-buffer.ts           recent strikes outside React state; dedupe, eviction, GeoJSON snapshot
@@ -24,7 +24,6 @@ ui/src/features/live-map/
   lib/maplibre.ts                lazy MapLibre import + worker URL fix
   constants/map-layers.ts        heatmap and circle layer styles (MapLibre expressions)
   constants/map-style.ts         basemap URL, initial view, attribution
-ui/src/features/stats/           stats panel; content arrives in Phase 7
 ui/src/shared/components/connection-badge.tsx   the single connection indicator (header)
 ```
 
@@ -35,15 +34,13 @@ ui/src/shared/components/connection-badge.tsx   the single connection indicator 
 /strikes/stream  (SSE) ───────┘          │
                                          │  every 500 ms
                         snapshot(now): evict > 15 min, age 0..1 ──> source.setData ──> MapLibre (WebGL)
-                                         │  every 1 s
-                                    setCount(size) ──> React re-renders the badge only
 ```
 
 ## Concepts
 - **Why not React state for strikes**: putting every strike in `useState` would re-render the component tree several times a second. The buffer is a plain object held for the component's lifetime (`useState(() => new StrikeBuffer(...))`), and MapLibre is updated directly through `mapRef.getMap().getSource('strikes').setData(...)`. React only re-renders for things that change rarely, like the connection status.
 - **MapLibre GL**: draws the map with WebGL on the GPU. Data goes into a **source** (GeoJSON here), and **layers** decide how it looks. Styles are data-driven **expressions**: `['interpolate', ['linear'], ['get', 'age'], 0, '#ffffff', 1, '#7c3aed']` = "colour by the feature's `age`, white at 0, violet at 1". `['zoom']` makes size and opacity depend on zoom level.
 - **GeoJSON order**: coordinates are `[lon, lat]`, the opposite of how people say them. There's a test for that.
-- **EventSource**: the browser's SSE client. It reconnects by itself after a dropped connection, but gives up on an error response (e.g. the dev proxy's 502 when the backend is down), so `strikeStream.ts` retries every 5 s in that case. Vite's dev proxy can also leave the browser's connection open after the backend dies, so a watchdog treats 12 s without a strike or heartbeat as a dead stream and reconnects. Every successful (re)connect reloads `/strikes/recent` to fill any gap; duplicates are ignored by the buffer.
+- **EventSource**: the browser's SSE client. It reconnects by itself after a dropped connection, but gives up on an error response (e.g. the dev proxy's 502 when the backend is down), so `strike-stream.ts` retries every 5 s in that case. Vite's dev proxy can also leave the browser's connection open after the backend dies, so a watchdog treats 12 s without a strike or heartbeat as a dead stream and reconnects. Every successful (re)connect reloads `/strikes/recent` to fill any gap; duplicates are ignored by the buffer.
 - **Effect cleanup**: `useEffect(() => followStrikes(...), [...])` returns the disconnect function, so React closes the stream when the component unmounts (and in dev StrictMode, which mounts twice on purpose to catch missing cleanups).
 - **MapLibre's worker**: tile and GeoJSON processing runs in a Web Worker that v6 looks for next to its own file. Vite relocates that file (dev pre-bundling, prod hashing), so `maplibre.ts` imports the worker with `?worker&url` (Vite bundles it and gives back a URL) and calls `setWorkerUrl` before the first map. It's done inside a lazy `import()` passed as `mapLib`, so MapLibre (~290 kB gzipped) stays in its own chunk.
 - **Two animation speeds**: the slow fade (15 min) is data-driven: `age` feeds opacity, colour and heatmap weight, refreshed every 500 ms, ending at opacity 0 so eviction is invisible. The fast arrival flash (1.5 s) is a CSS animation on an HTML marker, not map data: pushing GeoJSON 30×/s into MapLibre flooded its worker and starved the basemap tiles. CSS animations run on the browser's compositor, and each marker removes itself after the animation. `StrikeBuffer.onArrival` notifies only for new strikes from the live stream, so the initial `/strikes/recent` load doesn't light up the whole map. `prefers-reduced-motion` hides the flash.
@@ -51,6 +48,6 @@ ui/src/shared/components/connection-badge.tsx   the single connection indicator 
 
 ## Try
 1. Zoom into a storm cell until the heatmap fades and individual dots appear.
-2. In `layers.ts`, change the `circle-color` stops and watch Vite hot-reload the map.
+2. In `constants/map-layers.ts`, change the `circle-color` stops and watch Vite hot-reload the map.
 3. Change the window: `WINDOW_MINUTES = 5` in `features/live-map/containers/live-map.tsx` and watch older strikes disappear.
 4. Browser dev tools → Network → `stream`: watch the `strike` events arrive.

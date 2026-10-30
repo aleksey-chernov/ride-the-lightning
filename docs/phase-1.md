@@ -5,7 +5,7 @@
 sbt                     # start the sbt shell once (keeps JVM warm)
 > ~backend/reStart      # compile + start server, restart on every save
 > backend/reStop        # stop it
-> test                  # run tests
+> testFull              # run all tests
 ```
 In IntelliJ (shared configs in `.idea/runConfigurations/`):
 - **Backend**: run/debug `rtl.Main` (module `ride-the-lightning.backend.main`); use Debug for breakpoints.
@@ -54,7 +54,7 @@ A `GET /api/v1/health` hits Netty → Tapir strips `/api/v1`, matches `healthEnd
 - **Ox**: direct-style concurrency on Java virtual threads. `OxApp.Simple` gives a root scope; `never` blocks until Ctrl+C, then everything started in the scope is shut down. No `Future`/`IO` wrappers.
 - **pureconfig**: maps `application.conf` onto `Config` case classes; fails at startup with a clear message if something is missing.
 - **jsoniter-scala**: fast JSON codecs generated at compile time.
-- **sbt-buildinfo**: generates `rtl.BuildInfo` object with name/version at build time.
+- **sbt-buildinfo**: generates `rtl.BuildInfo` object with name, version and commit at build time.
 
 ## Things worth knowing
 - **sbt 2 client/server**: `sbt` connects to a running sbt server if one exists (IntelliJ may start one during import). Use the IntelliJ sbt shell *or* a terminal `sbt`, not both at once.

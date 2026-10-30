@@ -7,7 +7,7 @@ curl -N localhost:8080/api/v1/strikes/stream        # Ctrl+C to disconnect
 ```
 Output, one event per strike plus a heartbeat every 5 s:
 ```
-data: {"time":"2026-10-17T22:00:05.319973509Z","lat":24.559874,"lon":-50.506327,"region":3,...}
+data: {"time":"2026-10-17T22:00:05.319973Z","lat":24.559874,"lon":-50.506327,"region":3,"delaySeconds":4.1}
 event: strike
 
 data:

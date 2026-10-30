@@ -7,7 +7,7 @@ INGEST_SOURCE=replay sbt ~backend/reStart      # develop against the recording (
 sbt ~backend/reStart                           # live feed (one websocket connection)
 sbt testFull                                   # all tests (plain `test` only reruns affected ones in sbt 2)
 ```
-Each strike is logged: `⚡  25.795  -80.359  region=0 stations=28 delay=4.0s`.
+At this phase each strike was logged; since Phase 3 the log prints a summary per minute.
 In IntelliJ: **Backend (replay)** run config (shared) sets `INGEST_SOURCE=replay`.
 
 ## Files
@@ -51,6 +51,5 @@ Main: fork { strikes.runForeach(log) } <─────────────�
 
 ## Try
 1. Set a breakpoint in `Lzw.decode`, run `LzwTest` in Debug, watch `dict` grow.
-2. Log only strikes with `stations >= 20`: add `.filter(_.stations >= 20)` before `.runForeach` in `Main`.
-3. `REPLAY_SPEED=10 INGEST_SOURCE=replay sbt backend/run`: a 10× fast-forward.
-4. Pull the network cable (or toggle Wi-Fi) while live: watch `Connection #n lost` and the growing backoff.
+2. `REPLAY_SPEED=10 INGEST_SOURCE=replay sbt backend/run`: a 10× fast-forward.
+3. Pull the network cable (or toggle Wi-Fi) while live: watch `Connection #n lost` and the growing backoff.

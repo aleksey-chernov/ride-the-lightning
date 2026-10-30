@@ -9,7 +9,7 @@
 | `.jvmopts` | JVM flags for sbt itself (terminal and IntelliJ sbt shell): allow `sun.misc.Unsafe` and native access, which JDK 24+ otherwise warns about when Scala 3 / Netty use them. |
 | `.gitignore` / `.gitattributes` | Ignore build output (`target/`, `node_modules/`), force LF line endings. |
 | `CLAUDE.md` | Project brief + rules Claude reads at the start of every session. |
-| `docs/decisions.md` | Append-only log of decisions, so we don't revisit settled questions. |
+| `docs/decisions.md` | Decisions by topic, so we don't revisit settled questions. |
 | `docs/plan.md` | Phase checklist + protocol notes. |
 | `.claude/settings.json` | Pre-approves common dev commands to cut permission prompts. |
 
