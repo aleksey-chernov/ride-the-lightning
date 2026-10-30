@@ -19,7 +19,5 @@ export interface StatsResponse {
   perMinute: MinuteCount[];
   places: PlaceCount[];
   hotspots: Hotspot[];
-  maxMds?: number;
-  filteredOut: number;
   detection: Detection;
 }

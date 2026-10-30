@@ -1,16 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatMicros, formatSeconds } from './units.utils';
-
-describe('formatMicros', () => {
-  it('converts nanoseconds to microseconds with one decimal', () => {
-    expect(formatMicros(8_430)).toBe('8.4 µs');
-  });
-
-  it('drops a trailing zero decimal', () => {
-    expect(formatMicros(10_000)).toBe('10 µs');
-  });
-});
+import { formatSeconds } from './units.utils';
 
 describe('formatSeconds', () => {
   it('keeps one decimal below 10 s', () => {

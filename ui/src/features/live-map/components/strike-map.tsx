@@ -9,40 +9,40 @@ import type { MapFocus } from '@shared/types/map-focus';
 import { dotLayer, heatmapLayer } from '@features/live-map/constants/map-layers';
 import { INITIAL_VIEW, MAP_STYLE_URL, STRIKE_ATTRIBUTION } from '@features/live-map/constants/map-style';
 import { maplibre } from '@features/live-map/lib/maplibre';
-import { passesMds, type StrikeBuffer, type StrikeFeatures } from '@features/live-map/lib/strike-buffer';
 import { flash } from '@features/live-map/lib/strike-flash';
+import { NO_STRIKES, type StrikeFrames } from '@features/live-map/lib/strike-frames';
 
-const REFRESH_MS = 500;
 const FLY_DURATION_MS = 1600;
-const EMPTY: StrikeFeatures = { type: 'FeatureCollection', features: [] }; // stable reference: never reset by re-renders
 
-type Props = { buffer: StrikeBuffer; focus: MapFocus | null; maxMds: number | null };
+type Props = { frames: StrikeFrames; focus: MapFocus | null };
 
-/** Renders the buffer's strikes; talks to MapLibre directly so frequent updates skip React re-renders. */
-export function StrikeMap({ buffer, focus, maxMds }: Props) {
+/**
+ * Renders the frames' strikes (live or playback); talks to MapLibre directly so frequent updates skip React re-renders.
+ * Stays mounted across modes: a remount would reload the style and tiles and lose the camera.
+ */
+export function StrikeMap({ frames, focus }: Props) {
   const mapRef = useRef<MapRef>(null);
   const [loaded, setLoaded] = useState(false);
   const activeFlashes = useRef({ count: 0 }); // one counter across re-subscriptions, so MAX_FLASHES holds
 
-  // all strikes: a fresh snapshot twice a second, plus one right away so a filter change shows at once
+  // a frame whenever the frames say so, plus one right away so a mode or load change shows at once
   useEffect(() => {
-    const refresh = () => {
+    const redraw = () => {
       const source = mapRef.current?.getMap().getSource('strikes') as GeoJSONSource | undefined;
-      source?.setData(buffer.snapshot(Date.now(), maxMds));
+      source?.setData(frames.snapshot());
     };
-    refresh();
-    const id = window.setInterval(refresh, REFRESH_MS);
-    return () => window.clearInterval(id);
-  }, [buffer, maxMds]);
+    redraw();
+    return frames.subscribe(redraw);
+  }, [frames, loaded]);
 
-  // a CSS flash for each strike arriving over the stream (hidden for reduced motion, see styles/globals.css)
+  // a CSS flash for each arriving strike, live or in playback (hidden for reduced motion, see styles/globals.css)
   useEffect(() => {
     const active = activeFlashes.current;
-    return buffer.onArrival((s) => {
+    return frames.onArrival?.((s) => {
       const map = mapRef.current?.getMap();
-      if (map && passesMds(s.mds, maxMds)) void flash(map, s.lon, s.lat, active);
+      if (map) void flash(map, s.lon, s.lat, active);
     });
-  }, [buffer, maxMds]);
+  }, [frames]);
 
   // move the camera on each focus request; a request made before the map loads is applied on load
   useEffect(() => {
@@ -70,7 +70,7 @@ export function StrikeMap({ buffer, focus, maxMds }: Props) {
       attributionControl={{ compact: true, customAttribution: STRIKE_ATTRIBUTION }}
       style={{ position: 'absolute', inset: 0 }}
     >
-      <Source id="strikes" type="geojson" data={EMPTY}>
+      <Source id="strikes" type="geojson" data={NO_STRIKES}>
         <Layer {...heatmapLayer} />
         <Layer {...dotLayer} />
       </Source>

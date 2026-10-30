@@ -19,7 +19,6 @@ import {
 
 import { fetchJson } from '../../../shared/lib/fetch-json';
 import type { ErrorResponse } from '../../models/error-response';
-import type { GetStatsParams } from '../../models/get-stats-params';
 import type { StatsResponse } from '../../models/stats-response';
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -39,43 +38,33 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   return result;
 };
 
-export const getGetStatsUrl = (params?: GetStatsParams) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value));
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/api/v1/stats?${stringifiedParams}` : `/api/v1/stats`;
+export const getGetStatsUrl = () => {
+  return `/api/v1/stats`;
 };
 
 /**
- * Counts per minute, place and 0.5° hotspot plus detection percentiles, computed from the in-memory window; `maxMds` keeps strikes whose timing spread is at most that many ns
+ * Counts per minute, place and 0.5° hotspot plus delay percentiles, computed from the in-memory window
  */
-export const getStats = async (params?: GetStatsParams, options?: Parameters<typeof fetchJson>[1]): Promise<StatsResponse> => {
-  return fetchJson<StatsResponse>(getGetStatsUrl(params), {
+export const getStats = async (options?: Parameters<typeof fetchJson>[1]): Promise<StatsResponse> => {
+  return fetchJson<StatsResponse>(getGetStatsUrl(), {
     ...options,
     method: 'GET',
   });
 };
 
-export const getGetStatsQueryKey = (params?: GetStatsParams) => {
-  return [`/api/v1/stats`, ...(params ? [params] : [])] as const;
+export const getGetStatsQueryKey = () => {
+  return [`/api/v1/stats`] as const;
 };
 
-export const getGetStatsQueryOptions = <TData = Awaited<ReturnType<typeof getStats>>, TError = string | ErrorResponse>(
-  params?: GetStatsParams,
-  options?: { query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getStats>>, TError, TData>>; request?: SecondParameter<typeof fetchJson> },
-) => {
+export const getGetStatsQueryOptions = <TData = Awaited<ReturnType<typeof getStats>>, TError = ErrorResponse>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getStats>>, TError, TData>>;
+  request?: SecondParameter<typeof fetchJson>;
+}) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getGetStatsQueryKey(params);
+  const queryKey = queryOptions?.queryKey ?? getGetStatsQueryKey();
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getStats>>> = ({ signal }) => getStats(params, { signal, ...requestOptions });
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getStats>>> = ({ signal }) => getStats({ signal, ...requestOptions });
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<Awaited<ReturnType<typeof getStats>>, TError, TData> & {
     queryKey: DataTag<QueryKey, TData, TError>;
@@ -83,10 +72,9 @@ export const getGetStatsQueryOptions = <TData = Awaited<ReturnType<typeof getSta
 };
 
 export type GetStatsQueryResult = NonNullable<Awaited<ReturnType<typeof getStats>>>;
-export type GetStatsQueryError = string | ErrorResponse;
+export type GetStatsQueryError = ErrorResponse;
 
-export function useGetStats<TData = Awaited<ReturnType<typeof getStats>>, TError = string | ErrorResponse>(
-  params: undefined | GetStatsParams,
+export function useGetStats<TData = Awaited<ReturnType<typeof getStats>>, TError = ErrorResponse>(
   options: {
     query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getStats>>, TError, TData>> &
       Pick<DefinedInitialDataOptions<Awaited<ReturnType<typeof getStats>>, TError, Awaited<ReturnType<typeof getStats>>>, 'initialData'>;
@@ -94,8 +82,7 @@ export function useGetStats<TData = Awaited<ReturnType<typeof getStats>>, TError
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useGetStats<TData = Awaited<ReturnType<typeof getStats>>, TError = string | ErrorResponse>(
-  params?: GetStatsParams,
+export function useGetStats<TData = Awaited<ReturnType<typeof getStats>>, TError = ErrorResponse>(
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getStats>>, TError, TData>> &
       Pick<UndefinedInitialDataOptions<Awaited<ReturnType<typeof getStats>>, TError, Awaited<ReturnType<typeof getStats>>>, 'initialData'>;
@@ -103,18 +90,16 @@ export function useGetStats<TData = Awaited<ReturnType<typeof getStats>>, TError
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useGetStats<TData = Awaited<ReturnType<typeof getStats>>, TError = string | ErrorResponse>(
-  params?: GetStatsParams,
+export function useGetStats<TData = Awaited<ReturnType<typeof getStats>>, TError = ErrorResponse>(
   options?: { query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getStats>>, TError, TData>>; request?: SecondParameter<typeof fetchJson> },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
-export function useGetStats<TData = Awaited<ReturnType<typeof getStats>>, TError = string | ErrorResponse>(
-  params?: GetStatsParams,
+export function useGetStats<TData = Awaited<ReturnType<typeof getStats>>, TError = ErrorResponse>(
   options?: { query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getStats>>, TError, TData>>; request?: SecondParameter<typeof fetchJson> },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetStatsQueryOptions(params, options);
+  const queryOptions = getGetStatsQueryOptions(options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

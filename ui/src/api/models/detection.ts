@@ -7,7 +7,5 @@
 import type { Percentiles } from './percentiles';
 
 export interface Detection {
-  stationsUsed?: Percentiles;
   delaySeconds?: Percentiles;
-  mdsNanos?: Percentiles;
 }

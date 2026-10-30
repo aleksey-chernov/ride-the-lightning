@@ -77,16 +77,12 @@ describe('toPlaceShares', () => {
 });
 
 describe('describeStats', () => {
-  it('says how often stats refresh when no filter is applied', () => {
-    expect(describeStats({ filteredOut: 0 }, false)).toBe('Refreshed every 5 s');
+  it('says how often stats refresh', () => {
+    expect(describeStats(true, false)).toBe('Refreshed every 5 s');
   });
 
-  it('appends the echoed filter and the hidden count', () => {
-    expect(describeStats({ maxMds: 10_000, filteredOut: 1234 }, false)).toBe('Refreshed every 5 s · timing spread ≤ 10 µs · 1,234 hidden (last hour)');
-  });
-
-  it('lets a backend error win over the filter note', () => {
-    expect(describeStats({ maxMds: 10_000, filteredOut: 3 }, true)).toBe('Backend unreachable, showing last data');
-    expect(describeStats(undefined, true)).toBe('Backend unreachable');
+  it('lets a backend error win over the refresh note', () => {
+    expect(describeStats(true, true)).toBe('Backend unreachable, showing last data');
+    expect(describeStats(false, true)).toBe('Backend unreachable');
   });
 });

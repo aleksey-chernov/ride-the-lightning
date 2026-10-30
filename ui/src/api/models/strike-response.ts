@@ -10,8 +10,5 @@ export interface StrikeResponse {
   lat: number;
   lon: number;
   region: number;
-  /** Stations whose signal was used, among at most 40 reported; a lower bound when that list is full */
-  stations: number;
   delaySeconds: number;
-  mds: number;
 }
